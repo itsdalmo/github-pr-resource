@@ -42,7 +42,7 @@ func TestGet(t *testing.T) {
 			parameters:     resource.GetParameters{},
 			pullRequest:    createTestPR(1),
 			commit:         createTestCommit(1, false),
-			versionString:  `{"pr":"pr1","commit":"commit1","committed":"0001-01-01T00:00:00Z"}`,
+			versionString:  `{"pr":"pr1","commit":"commit1","committed":"0001-01-01T00:00:00Z","alreadyseen":""}`,
 			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_sha","value":"oid1"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"}]`,
 		},
 	}

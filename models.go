@@ -49,19 +49,27 @@ type MetadataField struct {
 	Value string `json:"value"`
 }
 
+// AlreadySeenVersion Interesting values compressed into data blob stored in Version.AlreadySeen
+type AlreadySeenVersion struct {
+	PR            string
+	committedDate time.Time
+}
+
 // Version communicated with Concourse. ID is the Github Global ID.
 type Version struct {
 	PR            string    `json:"pr"`
 	Commit        string    `json:"commit"`
 	CommittedDate time.Time `json:"committed,omitempty"`
+	AlreadySeen   string    `json:"alreadyseen"`
 }
 
 // NewVersion constructs a new Version.
-func NewVersion(p *PullRequest) Version {
+func NewVersion(p *PullRequest, alreadySeen string) Version {
 	return Version{
 		PR:            p.ID,
 		Commit:        p.Tip.ID,
 		CommittedDate: p.Tip.CommittedDate.Time,
+		AlreadySeen:   alreadySeen,
 	}
 }
 

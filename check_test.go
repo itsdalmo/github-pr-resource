@@ -28,6 +28,24 @@ var (
 			Tip:               createTestCommit(4, false),
 		},
 	}
+	testPreviousPullRequests = []*resource.PullRequest{
+		{
+			PullRequestObject: createTestPR(1),
+			Tip:               createTestCommit(3, true),
+		},
+		{
+			PullRequestObject: createTestPR(2),
+			Tip:               createTestCommit(4, false),
+		},
+		{
+			PullRequestObject: createTestPR(3),
+			Tip:               createTestCommit(2, false),
+		},
+		{
+			PullRequestObject: createTestPR(4),
+			Tip:               createTestCommit(6, false),
+		},
+	}
 )
 
 func TestCheck(t *testing.T) {
@@ -49,7 +67,7 @@ func TestCheck(t *testing.T) {
 			pullRequests: testPullRequests,
 			files:        [][]string{},
 			expected: resource.CheckResponse{
-				resource.NewVersion(testPullRequests[1]),
+				resource.NewVersion(testPullRequests[1], resource.GenerateVersion(testPullRequests[1:])),
 			},
 		},
 
@@ -59,11 +77,11 @@ func TestCheck(t *testing.T) {
 				Repository:  "itsdalmo/test-repository",
 				AccessToken: "oauthtoken",
 			},
-			version:      resource.NewVersion(testPullRequests[1]),
-			pullRequests: testPullRequests,
+			version:      resource.NewVersion(testPreviousPullRequests[1], resource.GenerateVersion(testPreviousPullRequests)),
+			pullRequests: testPreviousPullRequests,
 			files:        [][]string{},
 			expected: resource.CheckResponse{
-				resource.NewVersion(testPullRequests[1]),
+				resource.NewVersion(testPreviousPullRequests[1], resource.GenerateVersion(testPreviousPullRequests)),
 			},
 		},
 
@@ -73,23 +91,23 @@ func TestCheck(t *testing.T) {
 				Repository:  "itsdalmo/test-repository",
 				AccessToken: "oauthtoken",
 			},
-			version:      resource.NewVersion(testPullRequests[3]),
+			version:      resource.NewVersion(testPreviousPullRequests[3], resource.GenerateVersion(testPreviousPullRequests)),
 			pullRequests: testPullRequests,
 			files:        [][]string{},
 			expected: resource.CheckResponse{
-				resource.NewVersion(testPullRequests[2]),
-				resource.NewVersion(testPullRequests[1]),
+				resource.NewVersion(testPullRequests[3], resource.GenerateVersion(testPullRequests[1:4])),
+				resource.NewVersion(testPullRequests[1], resource.GenerateVersion(testPullRequests[1:4])),
 			},
 		},
 
 		{
-			description: "check will only return versions that match the specified paths",
+			description: "check will only return versions that match the specified paths and are newer",
 			source: resource.Source{
 				Repository:  "itsdalmo/test-repository",
 				AccessToken: "oauthtoken",
 				Paths:       []string{"terraform/*/*.tf", "terraform/*/*/*.tf"},
 			},
-			version:      resource.NewVersion(testPullRequests[3]),
+			version:      resource.NewVersion(testPreviousPullRequests[3], resource.GenerateVersion(testPreviousPullRequests)),
 			pullRequests: testPullRequests,
 			files: [][]string{
 				{"README.md", "travis.yml"},
@@ -97,7 +115,7 @@ func TestCheck(t *testing.T) {
 				{"terraform/modules/variables.tf", "travis.yml"},
 			},
 			expected: resource.CheckResponse{
-				resource.NewVersion(testPullRequests[2]),
+				resource.NewVersion(testPullRequests[3], resource.GenerateVersion(testPullRequests[2:])),
 			},
 		},
 
@@ -108,7 +126,7 @@ func TestCheck(t *testing.T) {
 				AccessToken: "oauthtoken",
 				IgnorePaths: []string{"*.md", "*.yml"},
 			},
-			version:      resource.NewVersion(testPullRequests[3]),
+			version:      resource.NewVersion(testPullRequests[3], resource.GenerateVersion(testPullRequests[3:])),
 			pullRequests: testPullRequests,
 			files: [][]string{
 				{"README.md", "travis.yml"},
@@ -116,7 +134,7 @@ func TestCheck(t *testing.T) {
 				{"terraform/modules/variables.tf", "travis.yml"},
 			},
 			expected: resource.CheckResponse{
-				resource.NewVersion(testPullRequests[2]),
+				resource.NewVersion(testPullRequests[2], resource.GenerateVersion(testPullRequests[2:])),
 			},
 		},
 		{
@@ -126,10 +144,10 @@ func TestCheck(t *testing.T) {
 				AccessToken:   "oauthtoken",
 				DisableCISkip: "true",
 			},
-			version:      resource.NewVersion(testPullRequests[1]),
+			version:      resource.NewVersion(testPullRequests[1], resource.GenerateVersion(testPullRequests[1:])),
 			pullRequests: testPullRequests,
 			expected: resource.CheckResponse{
-				resource.NewVersion(testPullRequests[0]),
+				resource.NewVersion(testPullRequests[0], resource.GenerateVersion(testPullRequests)),
 			},
 		},
 	}
@@ -147,6 +165,7 @@ func TestCheck(t *testing.T) {
 				gomock.InOrder(
 					github.EXPECT().ListModifiedFiles(gomock.Any()).Times(1).Return(tc.files[0], nil),
 					github.EXPECT().ListModifiedFiles(gomock.Any()).Times(1).Return(tc.files[1], nil),
+					github.EXPECT().ListModifiedFiles(gomock.Any()).Times(1).Return(tc.files[2], nil),
 				)
 			}
 

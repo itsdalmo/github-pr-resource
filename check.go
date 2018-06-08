@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"sort"
 	"strconv"
+	"strings"
+	"time"
 )
 
 // Check (business logic)
@@ -24,6 +26,9 @@ func Check(request CheckRequest, manager Github) (CheckResponse, error) {
 		}
 	}
 
+	var newPullsToReturn []*PullRequest
+	var alreadySeenPullsToHide []*PullRequest
+
 Loop:
 	for _, p := range pulls {
 		// [ci skip]/[skip ci] in Pull request title
@@ -32,10 +37,6 @@ Loop:
 		}
 		// [ci skip]/[skip ci] in Commit message
 		if !disableSkipCI && ContainsSkipCI(p.Tip.Message) {
-			continue
-		}
-		// Filter out commits that are too old.
-		if !p.Tip.CommittedDate.Time.After(request.Version.CommittedDate) {
 			continue
 		}
 
@@ -77,21 +78,83 @@ Loop:
 				continue Loop
 			}
 		}
-		response = append(response, NewVersion(p))
-	}
 
+		// Determine above/below the fold
+		if AboveTheFold(GetVersionStringFromPullRequest(p), request.Version.AlreadySeen) {
+			newPullsToReturn = append(newPullsToReturn, p)
+		} else {
+			alreadySeenPullsToHide = append(alreadySeenPullsToHide, p)
+		}
+	}
+	var combinedVersions Pulls = append(newPullsToReturn, alreadySeenPullsToHide...)
+	sort.Sort(combinedVersions)
+	var versionsJustSeen = GenerateVersion(combinedVersions)
+
+	// Add "above-the-fold" with new alreadySeen version strings
+	for _, p := range newPullsToReturn {
+		response = append(response, NewVersion(p, versionsJustSeen))
+	}
 	// Sort the commits by date
 	sort.Sort(response)
 
 	// If there are no new but an old version = return the old
-	if len(response) == 0 && request.Version.PR != "" {
+	if len(response) == 0 && request.Version.AlreadySeen != "" {
 		response = append(response, request.Version)
 	}
 	// If there are new versions and no previous = return just the latest
-	if len(response) != 0 && request.Version.PR == "" {
+	if len(response) != 0 && request.Version.AlreadySeen == "" {
 		response = CheckResponse{response[len(response)-1]}
 	}
 	return response, nil
+}
+
+// GetVersionStringFromPullRequest returns string-serialized representation of latest commit in a PR
+func GetVersionStringFromPullRequest(pull *PullRequest) string {
+	return strconv.Itoa(pull.Number) + ":" + strconv.FormatInt(pull.Tip.CommittedDate.Time.Unix(), 10)
+}
+
+// ExtractVersionFromVersionString takes a string-formatted pair of PR#:CommittedDate and decodes them
+func ExtractVersionFromVersionString(alreadySeenPair string) AlreadySeenVersion {
+	var pairs = strings.Split(alreadySeenPair, ":")
+	committedDateAsInt, err := strconv.ParseInt(pairs[1], 10, 64)
+	if err != nil {
+		panic(err)
+	}
+	var committedDate = time.Unix(committedDateAsInt, 0)
+	return AlreadySeenVersion{PR: pairs[0], committedDate: committedDate}
+}
+
+// GenerateVersion returns a string-formatted array of PR#:CommittedDate
+func GenerateVersion(pulls []*PullRequest) string {
+	var pairs []string
+	for _, p := range pulls {
+		pairs = append(pairs, GetVersionStringFromPullRequest(p))
+	}
+	return strings.Join(pairs, ",")
+}
+
+// AboveTheFold returns a boolean indicating if a given pull request commit is newer than any commits already seen for that pull request
+func AboveTheFold(pullRequestVersion string, alreadySeen string) bool {
+	if !strings.Contains(alreadySeen, ":") {
+		return true
+	}
+	var pairs = strings.Split(alreadySeen, ",")
+	var isAboveTheFold = false
+	var isFoundInPairs = false
+	var pullRequest = ExtractVersionFromVersionString(pullRequestVersion)
+	for _, pair := range pairs {
+		var thisPairVersion = ExtractVersionFromVersionString(pair)
+		if thisPairVersion.PR == pullRequest.PR {
+			isFoundInPairs = true
+			if pullRequest.committedDate.After(thisPairVersion.committedDate) {
+				isAboveTheFold = true
+			}
+		}
+	}
+	if !isFoundInPairs {
+		isAboveTheFold = true
+	}
+	return isAboveTheFold
 }
 
 // ContainsSkipCI returns true if a string contains [ci skip] or [skip ci].
@@ -148,5 +211,18 @@ func (r CheckResponse) Less(i, j int) bool {
 }
 
 func (r CheckResponse) Swap(i, j int) {
+	r[i], r[j] = r[j], r[i]
+}
+
+// Pulls ...
+type Pulls []*PullRequest
+
+func (r Pulls) Len() int {
+	return len(r)
+}
+func (r Pulls) Less(i, j int) bool {
+	return r[j].Number > r[i].Number
+}
+func (r Pulls) Swap(i, j int) {
 	r[i], r[j] = r[j], r[i]
 }
