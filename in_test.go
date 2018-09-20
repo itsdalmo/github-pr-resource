@@ -109,7 +109,7 @@ func TestGetSkipDownload(t *testing.T) {
 				Commit:        "commit1",
 				CommittedDate: time.Time{},
 			},
-			parameters: resource.GetParameters{SkipDownload: "true"},
+			parameters: resource.GetParameters{SkipDownload: true},
 		},
 	}
 
