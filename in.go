@@ -21,10 +21,10 @@ func Get(request GetRequest, github Github, git Git, outputDir string) (*GetResp
 	}
 
 	// Clone the repository and fetch the PR
-	if err := git.Init(); err != nil {
+	if err := git.Clone(pull.Repository.URL, pull.BaseRefName); err != nil {
 		return nil, err
 	}
-	if err := git.Pull(pull.Repository.URL, pull.BaseRefName); err != nil {
+	if err := git.Config(); err != nil {
 		return nil, err
 	}
 	if err := git.Fetch(pull.Repository.URL, pull.Number); err != nil {

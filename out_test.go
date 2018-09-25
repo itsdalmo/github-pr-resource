@@ -98,8 +98,8 @@ func TestPut(t *testing.T) {
 
 			git := mocks.NewMockGit(ctrl)
 			gomock.InOrder(
-				git.EXPECT().Init().Times(1).Return(nil),
-				git.EXPECT().Pull(tc.pullRequest.Repository.URL, tc.pullRequest.BaseRefName).Times(1).Return(nil),
+				git.EXPECT().Clone(tc.pullRequest.Repository.URL, tc.pullRequest.BaseRefName).Times(1).Return(nil),
+				git.EXPECT().Config().Times(1).Return(nil),
 				git.EXPECT().Fetch(tc.pullRequest.Repository.URL, tc.pullRequest.Number).Times(1).Return(nil),
 				git.EXPECT().RevParse(tc.pullRequest.BaseRefName).Times(1).Return("sha", nil),
 				git.EXPECT().Checkout("sha").Times(1).Return(nil),

@@ -44,6 +44,30 @@ func (mr *MockGitMockRecorder) Checkout(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Checkout", reflect.TypeOf((*MockGit)(nil).Checkout), arg0)
 }
 
+// Clone mocks base method
+func (m *MockGit) Clone(arg0, arg1 string) error {
+	ret := m.ctrl.Call(m, "Clone", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Clone indicates an expected call of Clone
+func (mr *MockGitMockRecorder) Clone(arg0, arg1 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Clone", reflect.TypeOf((*MockGit)(nil).Clone), arg0, arg1)
+}
+
+// Config mocks base method
+func (m *MockGit) Config() error {
+	ret := m.ctrl.Call(m, "Config")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Config indicates an expected call of Config
+func (mr *MockGitMockRecorder) Config() *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Config", reflect.TypeOf((*MockGit)(nil).Config))
+}
+
 // Fetch mocks base method
 func (m *MockGit) Fetch(arg0 string, arg1 int) error {
 	ret := m.ctrl.Call(m, "Fetch", arg0, arg1)
@@ -56,18 +80,6 @@ func (mr *MockGitMockRecorder) Fetch(arg0, arg1 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Fetch", reflect.TypeOf((*MockGit)(nil).Fetch), arg0, arg1)
 }
 
-// Init mocks base method
-func (m *MockGit) Init() error {
-	ret := m.ctrl.Call(m, "Init")
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Init indicates an expected call of Init
-func (mr *MockGitMockRecorder) Init() *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Init", reflect.TypeOf((*MockGit)(nil).Init))
-}
-
 // Merge mocks base method
 func (m *MockGit) Merge(arg0 string) error {
 	ret := m.ctrl.Call(m, "Merge", arg0)
@@ -78,18 +90,6 @@ func (m *MockGit) Merge(arg0 string) error {
 // Merge indicates an expected call of Merge
 func (mr *MockGitMockRecorder) Merge(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Merge", reflect.TypeOf((*MockGit)(nil).Merge), arg0)
-}
-
-// Pull mocks base method
-func (m *MockGit) Pull(arg0, arg1 string) error {
-	ret := m.ctrl.Call(m, "Pull", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Pull indicates an expected call of Pull
-func (mr *MockGitMockRecorder) Pull(arg0, arg1 interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Pull", reflect.TypeOf((*MockGit)(nil).Pull), arg0, arg1)
 }
 
 // RevParse mocks base method

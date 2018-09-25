@@ -13,8 +13,8 @@ import (
 // Git interface for testing purposes.
 //go:generate mockgen -destination=mocks/mock_git.go -package=mocks github.com/telia-oss/github-pr-resource Git
 type Git interface {
-	Init() error
-	Pull(string, string) error
+	Config() error
+	Clone(string, string) error
 	Fetch(string, int) error
 	Checkout(string) error
 	Merge(string) error
@@ -45,11 +45,8 @@ func (g *GitClient) command(name string, arg ...string) *exec.Cmd {
 	return cmd
 }
 
-// Init ...
-func (g *GitClient) Init() error {
-	if err := g.command("git", "init").Run(); err != nil {
-		return fmt.Errorf("init failed: %s", err)
-	}
+// Config ...
+func (g *GitClient) Config() error {
 	if err := g.command("git", "config", "user.name", "concourse-ci").Run(); err != nil {
 		return fmt.Errorf("failed to configure git user: %s", err)
 	}
@@ -59,20 +56,20 @@ func (g *GitClient) Init() error {
 	return nil
 }
 
-// Pull ...
-func (g *GitClient) Pull(uri, branch string) error {
+// Clone ...
+func (g *GitClient) Clone(uri, branch string) error {
 	endpoint, err := g.Endpoint(uri)
 	if err != nil {
 		return err
 	}
-	cmd := g.command("git", "pull", endpoint+".git", branch)
+	cmd := g.command("git", "clone", "-b", branch, endpoint+".git", ".")
 
 	// Discard output to have zero chance of logging the access token.
 	cmd.Stdout = ioutil.Discard
 	cmd.Stderr = ioutil.Discard
 
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("pull failed: %s", err)
+		return fmt.Errorf("clone failed: %s", err)
 	}
 	return nil
 }
