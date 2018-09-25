@@ -81,15 +81,15 @@ func (mr *MockGitMockRecorder) Merge(arg0 interface{}) *gomock.Call {
 }
 
 // Pull mocks base method
-func (m *MockGit) Pull(arg0 string) error {
-	ret := m.ctrl.Call(m, "Pull", arg0)
+func (m *MockGit) Pull(arg0, arg1 string) error {
+	ret := m.ctrl.Call(m, "Pull", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Pull indicates an expected call of Pull
-func (mr *MockGitMockRecorder) Pull(arg0 interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Pull", reflect.TypeOf((*MockGit)(nil).Pull), arg0)
+func (mr *MockGitMockRecorder) Pull(arg0, arg1 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Pull", reflect.TypeOf((*MockGit)(nil).Pull), arg0, arg1)
 }
 
 // RevParse mocks base method

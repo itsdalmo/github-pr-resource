@@ -14,7 +14,7 @@ import (
 //go:generate mockgen -destination=mocks/mock_git.go -package=mocks github.com/telia-oss/github-pr-resource Git
 type Git interface {
 	Init() error
-	Pull(string) error
+	Pull(string, string) error
 	Fetch(string, int) error
 	Checkout(string) error
 	Merge(string) error
@@ -60,12 +60,12 @@ func (g *GitClient) Init() error {
 }
 
 // Pull ...
-func (g *GitClient) Pull(uri string) error {
+func (g *GitClient) Pull(uri, branch string) error {
 	endpoint, err := g.Endpoint(uri)
 	if err != nil {
 		return err
 	}
-	cmd := g.command("git", "pull", endpoint+".git")
+	cmd := g.command("git", "pull", endpoint+".git", branch)
 
 	// Discard output to have zero chance of logging the access token.
 	cmd.Stdout = ioutil.Discard

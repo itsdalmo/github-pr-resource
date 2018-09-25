@@ -24,7 +24,7 @@ func Get(request GetRequest, github Github, git Git, outputDir string) (*GetResp
 	if err := git.Init(); err != nil {
 		return nil, err
 	}
-	if err := git.Pull(pull.Repository.URL); err != nil {
+	if err := git.Pull(pull.Repository.URL, pull.BaseRefName); err != nil {
 		return nil, err
 	}
 	if err := git.Fetch(pull.Repository.URL, pull.Number); err != nil {
