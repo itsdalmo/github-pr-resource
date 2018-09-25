@@ -62,7 +62,7 @@ func (g *GitClient) Clone(uri, branch string) error {
 	if err != nil {
 		return err
 	}
-	cmd := g.command("git", "clone", "-b", branch, endpoint+".git", ".")
+	cmd := g.command("git", "clone", "-b", branch, "--single-branch", endpoint+".git", ".")
 
 	// Discard output to have zero chance of logging the access token.
 	cmd.Stdout = ioutil.Discard
