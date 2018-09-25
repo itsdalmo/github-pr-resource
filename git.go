@@ -13,8 +13,8 @@ import (
 // Git interface for testing purposes.
 //go:generate mockgen -destination=mocks/mock_git.go -package=mocks github.com/telia-oss/github-pr-resource Git
 type Git interface {
-	Config() error
 	Clone(string, string) error
+	Config() error
 	Fetch(string, int) error
 	Checkout(string) error
 	Merge(string) error
@@ -45,17 +45,6 @@ func (g *GitClient) command(name string, arg ...string) *exec.Cmd {
 	return cmd
 }
 
-// Config ...
-func (g *GitClient) Config() error {
-	if err := g.command("git", "config", "user.name", "concourse-ci").Run(); err != nil {
-		return fmt.Errorf("failed to configure git user: %s", err)
-	}
-	if err := g.command("git", "config", "user.email", "concourse@local").Run(); err != nil {
-		return fmt.Errorf("failed to configure git email: %s", err)
-	}
-	return nil
-}
-
 // Clone ...
 func (g *GitClient) Clone(uri, branch string) error {
 	endpoint, err := g.Endpoint(uri)
@@ -70,6 +59,17 @@ func (g *GitClient) Clone(uri, branch string) error {
 
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("clone failed: %s", err)
+	}
+	return nil
+}
+
+// Config ...
+func (g *GitClient) Config() error {
+	if err := g.command("git", "config", "user.name", "concourse-ci").Run(); err != nil {
+		return fmt.Errorf("failed to configure git user: %s", err)
+	}
+	if err := g.command("git", "config", "user.email", "concourse@local").Run(); err != nil {
+		return fmt.Errorf("failed to configure git email: %s", err)
 	}
 	return nil
 }
