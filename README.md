@@ -4,14 +4,18 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/telia-oss/github-pr-resource)](https://goreportcard.com/report/github.com/telia-oss/github-pr-resource)
 [![Docker Automated build](https://img.shields.io/docker/automated/teliaoss/github-pr-resource.svg)](https://hub.docker.com/r/teliaoss/github-pr-resource/)
 
+[graphql-api]: https://developer.github.com/v4
+[original-resource]: https://github.com/jtarchie/github-pullrequest-resource
 
-A Concourse resource for pull requests on Github. Written in Go and based on the [Github V4 (GraphQL) API](https://developer.github.com/v4).
-Inspired by [the original](https://github.com/jtarchie/github-pullrequest-resource), with some important differences:
+A Concourse resource for pull requests on Github. Written in Go and based on the [Github V4 (GraphQL) API][graphql-api].
+Inspired by [the original][original-resource], with some important differences:
 
 - Github V4: `check` only requires 1 API call per 100th *open* pull request. (See [#costs](#costs) for more information).
 - Fetch/merge: `get` will always merge a specific commit from the Pull request into the latest base.
 - Metadata: `get` and `put` provides information about which commit (SHA) was used from both the PR and base.
 - Webhooks: Does not implement any caching thanks to GraphQL, which means it works well with webhooks.
+
+Make sure to check out [#migrating](#migrating) to learn more.
 
 ## Source Configuration
 
@@ -157,3 +161,53 @@ E.g., typical use for a repository with 125 open pull requests will incur the fo
 - `out`: 1 (set status on the commit)
 
 With a rate limit of 5000 per hour, it could handle 1250 commits between all of the 125 open pull requests in the span of that hour.
+
+## Migrating
+
+If you are coming from [jtarchie/github-pullrequest-resource][original-resource], its important to know that this resource is inspired by *but not a drop-in replacement for* the original. Here are some important differences:
+
+#### source
+
+Parameters that have been renamed:
+- `repo` -> `repository`
+- `ci_skip` -> `disable_ci_skip` (the logic has been inverted and its `true` by default)
+- `api_endpoint` -> `v3_endpoint`
+
+New parameters:
+- `v4_endpoint` (see description above)
+
+Parameters that are no longer needed:
+- `uri`: We fetch the URI directly from the Github API instead.
+- `private_key`: We clone over HTTPS using the access token for authentication.
+- `username`: Same as above
+- `password`: Same as above
+
+Parameters that did not make it:
+- `base`: 
+- `disable_forks`
+- `only_mergeable`: The `get` will just fail if the PR cannot be merged with the base.
+- `require_review_approval`
+- `authorship_restriction`
+- `label`
+- `skip_ssl_verification`
+- `git_config`
+
+#### get
+
+Parameters that are no longer needed:
+- `fetch_merge`: We are opinionated and always do a fetch_merge.
+
+Parameters that did not make it:
+- `git.*`
+
+#### put
+
+New parameters:
+- `comment`: See above.
+
+Parameters that have been renamed:
+- `comment` -> `comment_file` (because we added `comment`)
+
+Parameters that did not make it:
+- `merge.*`
+- `label`
