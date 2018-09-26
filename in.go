@@ -20,23 +20,22 @@ func Get(request GetRequest, github Github, git Git, outputDir string) (*GetResp
 		return nil, fmt.Errorf("failed to retrieve pull request: %s", err)
 	}
 
-	// Clone the repository and fetch the PR
-	if err := git.Clone(pull.Repository.URL, pull.BaseRefName); err != nil {
+	// Initialize and pull the base for the PR
+	if err := git.Init(pull.BaseRefName); err != nil {
 		return nil, err
 	}
-	if err := git.Config(); err != nil {
-		return nil, err
-	}
-	if err := git.Fetch(pull.Repository.URL, pull.Number); err != nil {
+	if err := git.Pull(pull.Repository.URL, pull.BaseRefName); err != nil {
 		return nil, err
 	}
 
-	// Create a branch from the base ref and merge PR into it
+	// Get the last commit SHA in base for the metadata
 	baseSHA, err := git.RevParse(pull.BaseRefName)
 	if err != nil {
 		return nil, err
 	}
-	if err := git.Checkout(baseSHA); err != nil {
+
+	// Fetch the PR and merge the specified commit into the base
+	if err := git.Fetch(pull.Repository.URL, pull.Number); err != nil {
 		return nil, err
 	}
 	if err := git.Merge(pull.Tip.OID); err != nil {
