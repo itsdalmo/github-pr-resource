@@ -5,7 +5,7 @@
 [![Docker Automated build](https://img.shields.io/docker/automated/teliaoss/github-pr-resource.svg)](https://hub.docker.com/r/teliaoss/github-pr-resource/)
 
 
-A Concourse resource for pull requests on Github. Written in Go and based on the [Github V4 (GraphQL) API](https://developer.github.com/v4/object/commit/).
+A Concourse resource for pull requests on Github. Written in Go and based on the [Github V4 (GraphQL) API](https://developer.github.com/v4).
 Inspired by [the original](https://github.com/jtarchie/github-pullrequest-resource), with some important differences:
 
 - Github V4: `check` only requires 1 API call per 100th *open* pull request. (See [#costs](#costs) for more information).
