@@ -166,48 +166,42 @@ With a rate limit of 5000 per hour, it could handle 1250 commits between all of 
 
 If you are coming from [jtarchie/github-pullrequest-resource][original-resource], its important to know that this resource is inspired by *but not a drop-in replacement for* the original. Here are some important differences:
 
-#### source
+#### Parameters
+New parameters:
+- `source`:
+  - `v4_endpoint` (see description above)
+- `put`:
+  - `comment` (see description above)
 
 Parameters that have been renamed:
-- `repo` -> `repository`
-- `ci_skip` -> `disable_ci_skip` (the logic has been inverted and its `true` by default)
-- `api_endpoint` -> `v3_endpoint`
-
-New parameters:
-- `v4_endpoint` (see description above)
-
-Parameters that are no longer needed:
-- `uri`: We fetch the URI directly from the Github API instead.
-- `private_key`: We clone over HTTPS using the access token for authentication.
-- `username`: Same as above
-- `password`: Same as above
-
-Parameters that did not make it:
-- `base`: 
-- `disable_forks`
-- `only_mergeable`: The `get` will just fail if the PR cannot be merged with the base.
-- `require_review_approval`
-- `authorship_restriction`
-- `label`
-- `skip_ssl_verification`
-- `git_config`
-
-#### get
+- `source`:
+  - `repo` -> `repository`
+  - `ci_skip` -> `disable_ci_skip` (the logic has been inverted and its `true` by default)
+  - `api_endpoint` -> `v3_endpoint`
+- `put`:
+  - `comment` -> `comment_file` (because we added `comment`)
 
 Parameters that are no longer needed:
-- `fetch_merge`: We are opinionated and always do a fetch_merge.
+- `src`:
+  - `uri`: We fetch the URI directly from the Github API instead.
+  - `private_key`: We clone over HTTPS using the access token for authentication.
+  - `username`: Same as above
+  - `password`: Same as above
+  - `only_mergeable`: We are opinionated and simply fail to `get` if it does not merge.
+- `get`:
+  - `fetch_merge`: We are opinionated and always do a fetch_merge.
 
 Parameters that did not make it:
-- `git.*`
-
-#### put
-
-New parameters:
-- `comment`: See above.
-
-Parameters that have been renamed:
-- `comment` -> `comment_file` (because we added `comment`)
-
-Parameters that did not make it:
-- `merge.*`
-- `label`
+- `src`:
+  - `base`: 
+  - `disable_forks`
+  - `require_review_approval`
+  - `authorship_restriction`
+  - `label`
+  - `skip_ssl_verification`
+  - `git_config`
+- `get`:
+  - `git.*`
+- `put`:
+  - `merge.*`
+  - `label`
