@@ -15,15 +15,16 @@ Inspired by [the original](https://github.com/jtarchie/github-pullrequest-resour
 
 ## Source Configuration
 
-|     Parameter     | Required |             Example              |                                                     Description                                                      |
-| ----------------- | -------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `repository`      | Yes      | `itsdalmo/test-repository`       | The repository to target.                                                                                            |
-| `access_token`    | Yes      |                                  | A Github Access Token with repository access (required for setting status on commits).                               |
-| `v3_endpoint`     | No       | `https://api.github.com`         | Endpoint to use for the V3 Github API (Restful).                                                                     |
-| `v4_endpoint`     | No       | `https://api.github.com/graphql` | Endpoint to use for the V4 Github API (Graphql).                                                                     |
-| `paths`           | No       | `terraform/*/*.tf`               | Only produce new versions if the PR includes changes to files that match one or more glob pattern.                   |
-| `ignore_paths`    | No       | `.ci/*`                          | Inverse of the above. Pattern syntax is documented in [filepath.Match](https://golang.org/pkg/path/filepath/#Match). |
-| `disable_ci_skip` | No       | `true`                           | Disable ability to skip builds with `[ci skip]` and `[skip ci]` in commit message or pull request title.             |
+| Parameter               | Required | Example                          | Description                                                                                                          |
+|-------------------------|----------|----------------------------------|----------------------------------------------------------------------------------------------------------------------|
+| `repository`            | Yes      | `itsdalmo/test-repository`       | The repository to target.                                                                                            |
+| `access_token`          | Yes      |                                  | A Github Access Token with repository access (required for setting status on commits).                               |
+| `v3_endpoint`           | No       | `https://api.github.com`         | Endpoint to use for the V3 Github API (Restful).                                                                     |
+| `v4_endpoint`           | No       | `https://api.github.com/graphql` | Endpoint to use for the V4 Github API (Graphql).                                                                     |
+| `paths`                 | No       | `terraform/*/*.tf`               | Only produce new versions if the PR includes changes to files that match one or more glob pattern.                   |
+| `ignore_paths`          | No       | `.ci/*`                          | Inverse of the above. Pattern syntax is documented in [filepath.Match](https://golang.org/pkg/path/filepath/#Match). |
+| `disable_ci_skip`       | No       | `true`                           | Disable ability to skip builds with `[ci skip]` and `[skip ci]` in commit message or pull request title.             |
+| `skip_ssl_verification` | No       | `true`                           | Disable SSL/TLS certificate validation on git and API clients. Use with care!                                        |
 
 Note: If `v3_endpoint` is set, `v4_endpoint` must also be set (and the other way around).
 
