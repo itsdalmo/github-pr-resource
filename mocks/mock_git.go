@@ -32,18 +32,6 @@ func (m *MockGit) EXPECT() *MockGitMockRecorder {
 	return m.recorder
 }
 
-// Checkout mocks base method
-func (m *MockGit) Checkout(arg0 string) error {
-	ret := m.ctrl.Call(m, "Checkout", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Checkout indicates an expected call of Checkout
-func (mr *MockGitMockRecorder) Checkout(arg0 interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Checkout", reflect.TypeOf((*MockGit)(nil).Checkout), arg0)
-}
-
 // Fetch mocks base method
 func (m *MockGit) Fetch(arg0 string, arg1 int) error {
 	ret := m.ctrl.Call(m, "Fetch", arg0, arg1)
