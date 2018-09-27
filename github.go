@@ -41,10 +41,6 @@ func NewGithubClient(s *Source) (*GithubClient, error) {
 		return nil, err
 	}
 
-	if s.SkipSSLVerification {
-		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-	}
-
 	// Skip SSL verification for self-signed certificates
 	// source: https://github.com/google/go-github/pull/598#issuecomment-333039238
 	var ctx context.Context
