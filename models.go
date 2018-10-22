@@ -14,8 +14,8 @@ type Source struct {
 	AccessToken         string   `json:"access_token"`
 	V3Endpoint          string   `json:"v3_endpoint"`
 	V4Endpoint          string   `json:"v4_endpoint"`
-	Paths               []string `json:"path"`
-	IgnorePaths         []string `json:"ignore_path"`
+	Paths               []string `json:"paths"`
+	IgnorePaths         []string `json:"ignore_paths"`
 	DisableCISkip       bool     `json:"disable_ci_skip"`
 	SkipSSLVerification bool     `json:"skip_ssl_verification"`
 }
