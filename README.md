@@ -167,14 +167,13 @@ With a rate limit of 5000 per hour, it could handle 1250 commits between all of 
 
 If you are coming from [jtarchie/github-pullrequest-resource][original-resource], its important to know that this resource is inspired by *but not a drop-in replacement for* the original. Here are some important differences:
 
-#### Parameters
-New parameters:
+#### New parameters:
 - `source`:
   - `v4_endpoint` (see description above)
 - `put`:
   - `comment` (see description above)
 
-Parameters that have been renamed:
+#### Parameters that have been renamed:
 - `source`:
   - `repo` -> `repository`
   - `ci_skip` -> `disable_ci_skip` (the logic has been inverted and its `true` by default)
@@ -182,7 +181,7 @@ Parameters that have been renamed:
 - `put`:
   - `comment` -> `comment_file` (because we added `comment`)
 
-Parameters that are no longer needed:
+#### Parameters that are no longer needed:
 - `src`:
   - `uri`: We fetch the URI directly from the Github API instead.
   - `private_key`: We clone over HTTPS using the access token for authentication.
@@ -192,7 +191,7 @@ Parameters that are no longer needed:
 - `get`:
   - `fetch_merge`: We are opinionated and always do a fetch_merge.
 
-Parameters that did not make it:
+#### Parameters that did not make it:
 - `src`:
   - `base`: 
   - `disable_forks`
