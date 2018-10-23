@@ -199,7 +199,6 @@ Parameters that did not make it:
   - `require_review_approval`
   - `authorship_restriction`
   - `label`
-  - `skip_ssl_verification`
   - `git_config`
 - `get`:
   - `git.*`
