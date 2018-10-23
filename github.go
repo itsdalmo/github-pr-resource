@@ -2,8 +2,10 @@ package resource
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 	"strconv"
@@ -39,7 +41,20 @@ func NewGithubClient(s *Source) (*GithubClient, error) {
 		return nil, err
 	}
 
-	client := oauth2.NewClient(context.TODO(), oauth2.StaticTokenSource(
+	// Skip SSL verification for self-signed certificates
+	// source: https://github.com/google/go-github/pull/598#issuecomment-333039238
+	var ctx context.Context
+	if s.SkipSSLVerification {
+		insecureClient := &http.Client{Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
+		}
+		ctx = context.WithValue(context.TODO(), oauth2.HTTPClient, insecureClient)
+	} else {
+		ctx = context.TODO()
+	}
+
+	client := oauth2.NewClient(ctx, oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: s.AccessToken},
 	))
 

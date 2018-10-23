@@ -158,7 +158,7 @@ func TestGetAndPutE2E(t *testing.T) {
 			metadataString: `[{"name":"pr","value":"4"},{"name":"url","value":"https://github.com/itsdalmo/test-repository/pull/4"},{"name":"head_sha","value":"a5114f6ab89f4b736655642a11e8d15ce363d882"},{"name":"base_sha","value":"93eeeedb8a16e6662062d1eca5655108977cc59a"},{"name":"message","value":"Push 2."},{"name":"author","value":"itsdalmo"}]`,
 		},
 		{
-			description: "get works with non-master bases (and disabled ci skip)",
+			description: "get works with non-master bases",
 			source: resource.Source{
 				Repository:  "itsdalmo/test-repository",
 				V3Endpoint:  "https://api.github.com/",
@@ -174,6 +174,25 @@ func TestGetAndPutE2E(t *testing.T) {
 			putParameters:  resource.PutParameters{},
 			versionString:  `{"pr":"6","commit":"ac771f3b69cbd63b22bbda553f827ab36150c640","committed":"0001-01-01T00:00:00Z"}`,
 			metadataString: `[{"name":"pr","value":"6"},{"name":"url","value":"https://github.com/itsdalmo/test-repository/pull/6"},{"name":"head_sha","value":"ac771f3b69cbd63b22bbda553f827ab36150c640"},{"name":"base_sha","value":"93eeeedb8a16e6662062d1eca5655108977cc59a"},{"name":"message","value":"[skip ci] Add a PR with a non-master base"},{"name":"author","value":"itsdalmo"}]`,
+		},
+		{
+			description: "get works when ssl verification is disabled",
+			source: resource.Source{
+				Repository:          "itsdalmo/test-repository",
+				V3Endpoint:          "https://api.github.com/",
+				V4Endpoint:          "https://api.github.com/graphql",
+				AccessToken:         os.Getenv("GITHUB_ACCESS_TOKEN"),
+				SkipSSLVerification: true,
+			},
+			version: resource.Version{
+				PR:            targetPullRequestID,
+				Commit:        targetCommitID,
+				CommittedDate: time.Time{},
+			},
+			getParameters:  resource.GetParameters{},
+			putParameters:  resource.PutParameters{},
+			versionString:  `{"pr":"4","commit":"a5114f6ab89f4b736655642a11e8d15ce363d882","committed":"0001-01-01T00:00:00Z"}`,
+			metadataString: `[{"name":"pr","value":"4"},{"name":"url","value":"https://github.com/itsdalmo/test-repository/pull/4"},{"name":"head_sha","value":"a5114f6ab89f4b736655642a11e8d15ce363d882"},{"name":"base_sha","value":"93eeeedb8a16e6662062d1eca5655108977cc59a"},{"name":"message","value":"Push 2."},{"name":"author","value":"itsdalmo"}]`,
 		},
 	}
 

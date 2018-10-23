@@ -5,6 +5,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/url"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -22,6 +23,9 @@ type Git interface {
 
 // NewGitClient ...
 func NewGitClient(source *Source, dir string, output io.Writer) (*GitClient, error) {
+	if source.SkipSSLVerification {
+		os.Setenv("GIT_SSL_NO_VERIFY", "true")
+	}
 	return &GitClient{
 		AccessToken: source.AccessToken,
 		Directory:   dir,
