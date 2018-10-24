@@ -10,7 +10,11 @@ import (
 
 func main() {
 	var request resource.CheckRequest
-	if err := json.NewDecoder(os.Stdin).Decode(&request); err != nil {
+
+	decoder := json.NewDecoder(os.Stdin)
+	decoder.DisallowUnknownFields()
+
+	if err := decoder.Decode(&request); err != nil {
 		log.Fatalf("failed to unmarshal request: %s", err)
 	}
 
