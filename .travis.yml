@@ -5,12 +5,12 @@ services:
 matrix:
   include:
   - os: osx
-    go: 1.10.x
+    go: 1.11.x
     env:
       - TARGET=darwin
       - ARCH=amd64
   - os: linux
-    go: 1.10.x
+    go: 1.11.x
     env:
       - TARGET=linux
       - ARCH=amd64
