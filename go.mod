@@ -2,14 +2,13 @@ module github.com/telia-oss/github-pr-resource
 
 require (
 	github.com/golang/mock v1.1.1
-	github.com/golang/protobuf v1.1.0 // indirect
-	github.com/google/go-github v15.0.0+incompatible
-	github.com/google/go-querystring v0.0.0-20170111101155-53e6ce116135 // indirect
-	github.com/shurcooL/githubv4 v0.0.0-20180509030948-19298c78142b
+	github.com/google/go-github v17.0.0+incompatible
+	github.com/google/go-querystring v1.0.0 // indirect
+	github.com/shurcooL/githubv4 v0.0.0-20180925043049-51d7b505e2e9
 	github.com/shurcooL/go v0.0.0-20180423040247-9e1955d9fb6e // indirect
-	github.com/shurcooL/graphql v0.0.0-20180302221403-3d276b9dcc6b // indirect
-	golang.org/x/net v0.0.0-20180507195353-d11bb6cd8e3c // indirect
-	golang.org/x/oauth2 v0.0.0-20180503012634-cdc340f7c179
+	github.com/shurcooL/graphql v0.0.0-20180924043259-e4a3a37e6d42 // indirect
+	golang.org/x/net v0.0.0-20181029044818-c44066c5c816 // indirect
+	golang.org/x/oauth2 v0.0.0-20181031022657-8527f56f7107
 	golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f // indirect
-	google.golang.org/appengine v1.0.0 // indirect
+	google.golang.org/appengine v1.2.0 // indirect
 )
