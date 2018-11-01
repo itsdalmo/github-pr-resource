@@ -61,7 +61,10 @@ generate notifications over the webhook. So if you have a repository with little
 Clones the base (e.g. `master` branch) at the latest commit, and merges the pull request at the specified commit
 into master. This ensures that we are both testing and setting status on the exact commit that was requested in
 input. Because the base of the PR is not locked to a specific commit in versions emitted from `check`, a fresh
-`get` will always use the latest commit in master and *report the SHA of said commit in the metadata*.
+`get` will always use the latest commit in master and *report the SHA of said commit in the metadata*. Both the 
+requested version and the metadata emitted by `get` are available to your tasks as JSON:
+- `.git/resource/version.json`
+- `.git/resource/metadata.json`
 
 When specifying `skip_download` the pull request volume mounted to subsequent tasks will be empty, which is a problem 
 when you set e.g. the pending status before running the actual tests. The workaround for this is to use an alias for 
