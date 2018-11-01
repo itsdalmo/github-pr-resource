@@ -1,4 +1,4 @@
-FROM golang:1.10 as builder
+FROM golang:1.11 as builder
 MAINTAINER telia-oss
 ADD . /go/src/github.com/telia-oss/github-pr-resource
 WORKDIR /go/src/github.com/telia-oss/github-pr-resource
