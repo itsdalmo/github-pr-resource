@@ -29,6 +29,7 @@ Make sure to check out [#migrating](#migrating) to learn more.
 | `ignore_paths`          | No       | `.ci/`                          | Inverse of the above. Pattern syntax is documented in [filepath.Match](https://golang.org/pkg/path/filepath/#Match), or a path prefix can be specified (e.g. `.ci/` will match everything in the `.ci` directory).                                                                                                                                                                        |
 | `disable_ci_skip`       | No       | `true`                           | Disable ability to skip builds with `[ci skip]` and `[skip ci]` in commit message or pull request title.                                                                                                                                                                                   |
 | `skip_ssl_verification` | No       | `true`                           | Disable SSL/TLS certificate validation on git and API clients. Use with care!                                                                                                                                                                                                              |
+| `disable_forks`         | No       | `true`                           | Disable triggering of the resource if the pull request's fork repository is different to the configured repository.                                                                                                                                                                        |
 
 Note: If `v3_endpoint` is set, `v4_endpoint` must also be set (and the other way around).
 
@@ -197,7 +198,6 @@ If you are coming from [jtarchie/github-pullrequest-resource][original-resource]
 #### Parameters that did not make it:
 - `src`:
   - `base`: 
-  - `disable_forks`
   - `require_review_approval`
   - `authorship_restriction`
   - `label`
