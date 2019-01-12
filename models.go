@@ -18,6 +18,7 @@ type Source struct {
 	IgnorePaths         []string `json:"ignore_paths"`
 	DisableCISkip       bool     `json:"disable_ci_skip"`
 	SkipSSLVerification bool     `json:"skip_ssl_verification"`
+	DisableForks        bool     `json:"disable_forks"`
 }
 
 // Validate the source configuration.
@@ -85,6 +86,7 @@ type PullRequestObject struct {
 	Repository  struct {
 		URL string
 	}
+	IsCrossRepository bool
 }
 
 // CommitObject represents the GraphQL commit node.

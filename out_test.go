@@ -32,7 +32,7 @@ func TestPut(t *testing.T) {
 				CommittedDate: time.Time{},
 			},
 			parameters:  resource.PutParameters{},
-			pullRequest: createTestPR(1, false),
+			pullRequest: createTestPR(1, false, false),
 		},
 
 		{
@@ -49,7 +49,7 @@ func TestPut(t *testing.T) {
 			parameters: resource.PutParameters{
 				Status: "success",
 			},
-			pullRequest: createTestPR(1, false),
+			pullRequest: createTestPR(1, false, false),
 		},
 
 		{
@@ -67,7 +67,7 @@ func TestPut(t *testing.T) {
 				Status:  "failure",
 				Context: "build",
 			},
-			pullRequest: createTestPR(1, false),
+			pullRequest: createTestPR(1, false, false),
 		},
 
 		{
@@ -84,7 +84,7 @@ func TestPut(t *testing.T) {
 			parameters: resource.PutParameters{
 				Comment: "comment",
 			},
-			pullRequest: createTestPR(1, false),
+			pullRequest: createTestPR(1, false, false),
 		},
 	}
 

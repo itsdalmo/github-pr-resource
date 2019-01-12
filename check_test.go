@@ -11,10 +11,12 @@ import (
 
 var (
 	testPullRequests = []*resource.PullRequest{
-		createTestPR(1, true),
-		createTestPR(2, false),
-		createTestPR(3, false),
-		createTestPR(4, false),
+		createTestPR(1, true, false),
+		createTestPR(2, false, false),
+		createTestPR(3, false, false),
+		createTestPR(4, false, false),
+		createTestPR(5, false, true),
+		createTestPR(6, false, false),
 	}
 )
 
@@ -118,6 +120,21 @@ func TestCheck(t *testing.T) {
 			pullRequests: testPullRequests,
 			expected: resource.CheckResponse{
 				resource.NewVersion(testPullRequests[0]),
+			},
+		},
+		{
+			description: "check correctly ignores cross repo pull requests",
+			source: resource.Source{
+				Repository:   "itsdalmo/test-repository",
+				AccessToken:  "oauthtoken",
+				DisableForks: true,
+			},
+			version:      resource.NewVersion(testPullRequests[5]),
+			pullRequests: testPullRequests,
+			expected: resource.CheckResponse{
+				resource.NewVersion(testPullRequests[3]),
+				resource.NewVersion(testPullRequests[2]),
+				resource.NewVersion(testPullRequests[1]),
 			},
 		},
 	}
