@@ -34,6 +34,10 @@ Loop:
 			continue
 		}
 
+		if request.Source.DisableForks && p.IsCrossRepository {
+			continue
+		}
+
 		// Fetch files once if paths/ignore_paths are specified.
 		var files []string
 
