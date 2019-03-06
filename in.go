@@ -79,6 +79,11 @@ func Get(request GetRequest, github Github, git Git, outputDir string) (*GetResp
 		return nil, fmt.Errorf("failed to write metadata: %s", err)
 	}
 
+	// Write .git/ref file
+	if err := ioutil.WriteFile(filepath.Join(outputDir, ".git", "ref"), []byte(request.Version.Commit), 0644); err != nil {
+		return nil, fmt.Errorf("failed to write .git/ref: %s", err)
+	}
+
 	return &GetResponse{
 		Version:  request.Version,
 		Metadata: metadata,

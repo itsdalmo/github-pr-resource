@@ -136,6 +136,7 @@ func TestGetAndPutE2E(t *testing.T) {
 		version        resource.Version
 		getParameters  resource.GetParameters
 		putParameters  resource.PutParameters
+		refString      string
 		versionString  string
 		metadataString string
 	}{
@@ -154,6 +155,7 @@ func TestGetAndPutE2E(t *testing.T) {
 			},
 			getParameters:  resource.GetParameters{},
 			putParameters:  resource.PutParameters{},
+			refString:      "a5114f6ab89f4b736655642a11e8d15ce363d882",
 			versionString:  `{"pr":"4","commit":"a5114f6ab89f4b736655642a11e8d15ce363d882","committed":"0001-01-01T00:00:00Z"}`,
 			metadataString: `[{"name":"pr","value":"4"},{"name":"url","value":"https://github.com/itsdalmo/test-repository/pull/4"},{"name":"head_name","value":"my_second_pull"},{"name":"head_sha","value":"a5114f6ab89f4b736655642a11e8d15ce363d882"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"93eeeedb8a16e6662062d1eca5655108977cc59a"},{"name":"message","value":"Push 2."},{"name":"author","value":"itsdalmo"}]`,
 		},
@@ -172,6 +174,7 @@ func TestGetAndPutE2E(t *testing.T) {
 			},
 			getParameters:  resource.GetParameters{},
 			putParameters:  resource.PutParameters{},
+			refString:      "ac771f3b69cbd63b22bbda553f827ab36150c640",
 			versionString:  `{"pr":"6","commit":"ac771f3b69cbd63b22bbda553f827ab36150c640","committed":"0001-01-01T00:00:00Z"}`,
 			metadataString: `[{"name":"pr","value":"6"},{"name":"url","value":"https://github.com/itsdalmo/test-repository/pull/6"},{"name":"head_name","value":"test-develop-pr"},{"name":"head_sha","value":"ac771f3b69cbd63b22bbda553f827ab36150c640"},{"name":"base_name","value":"develop"},{"name":"base_sha","value":"93eeeedb8a16e6662062d1eca5655108977cc59a"},{"name":"message","value":"[skip ci] Add a PR with a non-master base"},{"name":"author","value":"itsdalmo"}]`,
 		},
@@ -191,6 +194,7 @@ func TestGetAndPutE2E(t *testing.T) {
 			},
 			getParameters:  resource.GetParameters{},
 			putParameters:  resource.PutParameters{},
+			refString:      "a5114f6ab89f4b736655642a11e8d15ce363d882",
 			versionString:  `{"pr":"4","commit":"a5114f6ab89f4b736655642a11e8d15ce363d882","committed":"0001-01-01T00:00:00Z"}`,
 			metadataString: `[{"name":"pr","value":"4"},{"name":"url","value":"https://github.com/itsdalmo/test-repository/pull/4"},{"name":"head_name","value":"my_second_pull"},{"name":"head_sha","value":"a5114f6ab89f4b736655642a11e8d15ce363d882"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"93eeeedb8a16e6662062d1eca5655108977cc59a"},{"name":"message","value":"Push 2."},{"name":"author","value":"itsdalmo"}]`,
 		},
@@ -231,6 +235,11 @@ func TestGetAndPutE2E(t *testing.T) {
 
 			metadata := readTestFile(t, filepath.Join(dir, ".git", "resource", "metadata.json"))
 			if got, want := metadata, tc.metadataString; got != want {
+				t.Errorf("\ngot:\n%v\nwant:\n%v\n", got, want)
+			}
+
+			ref := readTestFile(t, filepath.Join(dir, ".git", "ref"))
+			if got, want := ref, tc.refString; got != want {
 				t.Errorf("\ngot:\n%v\nwant:\n%v\n", got, want)
 			}
 

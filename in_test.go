@@ -24,6 +24,7 @@ func TestGet(t *testing.T) {
 		version        resource.Version
 		parameters     resource.GetParameters
 		pullRequest    *resource.PullRequest
+		refString      string
 		versionString  string
 		metadataString string
 	}{
@@ -40,6 +41,7 @@ func TestGet(t *testing.T) {
 			},
 			parameters:     resource.GetParameters{},
 			pullRequest:    createTestPR(1, false, false),
+			refString:      "commit1",
 			versionString:  `{"pr":"pr1","commit":"commit1","committed":"0001-01-01T00:00:00Z"}`,
 			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"}]`,
 		},
@@ -83,6 +85,11 @@ func TestGet(t *testing.T) {
 
 			metadata := readTestFile(t, filepath.Join(dir, ".git", "resource", "metadata.json"))
 			if got, want := metadata, tc.metadataString; got != want {
+				t.Errorf("\ngot:\n%v\nwant:\n%v\n", got, want)
+			}
+
+			ref := readTestFile(t, filepath.Join(dir, ".git", "ref"))
+			if got, want := ref, tc.refString; got != want {
 				t.Errorf("\ngot:\n%v\nwant:\n%v\n", got, want)
 			}
 		})
@@ -143,6 +150,7 @@ func TestGetGitCrypt(t *testing.T) {
 		version        resource.Version
 		parameters     resource.GetParameters
 		pullRequest    *resource.PullRequest
+		refString      string
 		versionString  string
 		metadataString string
 	}{
@@ -160,6 +168,7 @@ func TestGetGitCrypt(t *testing.T) {
 			},
 			parameters:     resource.GetParameters{},
 			pullRequest:    createTestPR(1, false, false),
+			refString:      "commit1",
 			versionString:  `{"pr":"pr1","commit":"commit1","committed":"0001-01-01T00:00:00Z"}`,
 			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"}]`,
 		},
@@ -204,6 +213,11 @@ func TestGetGitCrypt(t *testing.T) {
 
 			metadata := readTestFile(t, filepath.Join(dir, ".git", "resource", "metadata.json"))
 			if got, want := metadata, tc.metadataString; got != want {
+				t.Errorf("\ngot:\n%v\nwant:\n%v\n", got, want)
+			}
+
+			ref := readTestFile(t, filepath.Join(dir, ".git", "ref"))
+			if got, want := ref, tc.refString; got != want {
 				t.Errorf("\ngot:\n%v\nwant:\n%v\n", got, want)
 			}
 		})
