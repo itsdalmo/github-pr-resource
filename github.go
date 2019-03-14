@@ -17,7 +17,7 @@ import (
 )
 
 // Github for testing purposes.
-//go:generate mockgen -destination=mocks/mock_github.go -package=mocks github.com/telia-oss/github-pr-resource Github
+//go:generate counterfeiter -o fakes/fake_github.go . Github
 type Github interface {
 	ListOpenPullRequests() ([]*PullRequest, error)
 	ListModifiedFiles(int) ([]string, error)

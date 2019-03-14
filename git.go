@@ -14,7 +14,7 @@ import (
 )
 
 // Git interface for testing purposes.
-//go:generate mockgen -destination=mocks/mock_git.go -package=mocks github.com/telia-oss/github-pr-resource Git
+//go:generate counterfeiter -o fakes/fake_git.go . Git
 type Git interface {
 	Init(string) error
 	Pull(string, string) error
