@@ -202,19 +202,20 @@ func TestGetAndPutE2E(t *testing.T) {
 		t.Run(tc.description, func(t *testing.T) {
 			// Create temporary directory
 			dir, err := ioutil.TempDir("", "github-pr-resource")
-			require.Nil(t, err)
+			require.NoError(t, err)
 			defer os.RemoveAll(dir)
 
 			github, err := resource.NewGithubClient(&tc.source)
-			require.Nil(t, err)
+			require.NoError(t, err)
+
 			git, err := resource.NewGitClient(&tc.source, dir, ioutil.Discard)
-			require.Nil(t, err)
+			require.NoError(t, err)
 
 			// Get (output and files)
 			getRequest := resource.GetRequest{Source: tc.source, Version: tc.version, Params: tc.getParameters}
 			getOutput, err := resource.Get(getRequest, github, git, dir)
 
-			require.Nil(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, tc.version, getOutput.Version)
 
 			version := readTestFile(t, filepath.Join(dir, ".git", "resource", "version.json"))
@@ -227,7 +228,7 @@ func TestGetAndPutE2E(t *testing.T) {
 			putRequest := resource.PutRequest{Source: tc.source, Params: tc.putParameters}
 			putOutput, err := resource.Put(putRequest, github, dir)
 
-			require.Nil(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, tc.version, putOutput.Version)
 		})
 	}

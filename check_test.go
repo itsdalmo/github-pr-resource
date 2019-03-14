@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	resource "github.com/telia-oss/github-pr-resource"
 	"github.com/telia-oss/github-pr-resource/fakes"
 )
@@ -150,10 +149,11 @@ func TestCheck(t *testing.T) {
 
 			input := resource.CheckRequest{Source: tc.source, Version: tc.version}
 			output, err := resource.Check(input, github)
-			require.Nil(t, err)
 
 			assert.Equal(t, 1, github.ListOpenPullRequestsCallCount())
-			assert.Equal(t, tc.expected, output)
+			if assert.NoError(t, err) {
+				assert.Equal(t, tc.expected, output)
+			}
 		})
 	}
 }
@@ -270,8 +270,9 @@ func TestFilterPath(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.description, func(t *testing.T) {
 			got, err := resource.FilterPath(tc.files, tc.pattern)
-			require.Nil(t, err)
-			assert.Equal(t, tc.want, got)
+			if assert.NoError(t, err) {
+				assert.Equal(t, tc.want, got)
+			}
 		})
 	}
 }
@@ -337,8 +338,9 @@ func TestFilterIgnorePath(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.description, func(t *testing.T) {
 			got, err := resource.FilterIgnorePath(tc.files, tc.pattern)
-			require.Nil(t, err)
-			assert.Equal(t, tc.want, got)
+			if assert.NoError(t, err) {
+				assert.Equal(t, tc.want, got)
+			}
 		})
 	}
 }

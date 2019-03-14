@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	resource "github.com/telia-oss/github-pr-resource"
 	"github.com/telia-oss/github-pr-resource/fakes"
 )
@@ -109,27 +108,28 @@ func TestPut(t *testing.T) {
 
 			putInput := resource.PutRequest{Source: tc.source, Params: tc.parameters}
 			output, err := resource.Put(putInput, github, dir)
-			require.Nil(t, err)
 
 			// Validate method calls put on Github.
 			if tc.parameters.Status != "" {
-				require.Equal(t, 1, github.UpdateCommitStatusCallCount())
-
-				commit, context, status := github.UpdateCommitStatusArgsForCall(0)
-				assert.Equal(t, tc.version.Commit, commit)
-				assert.Equal(t, tc.parameters.Context, context)
-				assert.Equal(t, tc.parameters.Status, status)
+				if assert.Equal(t, 1, github.UpdateCommitStatusCallCount()) {
+					commit, context, status := github.UpdateCommitStatusArgsForCall(0)
+					assert.Equal(t, tc.version.Commit, commit)
+					assert.Equal(t, tc.parameters.Context, context)
+					assert.Equal(t, tc.parameters.Status, status)
+				}
 			}
 			if tc.parameters.Comment != "" {
-				require.Equal(t, 1, github.PostCommentCallCount())
-
-				pr, comment := github.PostCommentArgsForCall(0)
-				assert.Equal(t, tc.version.PR, pr)
-				assert.Equal(t, tc.parameters.Comment, comment)
+				if assert.Equal(t, 1, github.PostCommentCallCount()) {
+					pr, comment := github.PostCommentArgsForCall(0)
+					assert.Equal(t, tc.version.PR, pr)
+					assert.Equal(t, tc.parameters.Comment, comment)
+				}
 			}
 
 			// Validate output
-			assert.Equal(t, tc.version, output.Version)
+			if assert.NoError(t, err) {
+				assert.Equal(t, tc.version, output.Version)
+			}
 		})
 	}
 }

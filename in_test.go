@@ -11,7 +11,6 @@ import (
 
 	"github.com/shurcooL/githubv4"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	resource "github.com/telia-oss/github-pr-resource"
 	"github.com/telia-oss/github-pr-resource/fakes"
 )
@@ -75,64 +74,60 @@ func TestGet(t *testing.T) {
 
 			input := resource.GetRequest{Source: tc.source, Version: tc.version, Params: tc.parameters}
 			output, err := resource.Get(input, github, git, dir)
-			require.Nil(t, err)
 
 			// Validate Github calls
-			require.Equal(t, 1, github.GetPullRequestCallCount())
-			{
+			if assert.Equal(t, 1, github.GetPullRequestCallCount()) {
 				pr, commit := github.GetPullRequestArgsForCall(0)
 				assert.Equal(t, tc.version.PR, pr)
 				assert.Equal(t, tc.version.Commit, commit)
 			}
 
 			// Validate Git calls
-			require.Equal(t, 1, git.InitCallCount())
-			{
+			if assert.Equal(t, 1, git.InitCallCount()) {
 				base := git.InitArgsForCall(0)
 				assert.Equal(t, tc.pullRequest.BaseRefName, base)
 			}
 
-			require.Equal(t, 1, git.PullCallCount())
-			{
+			if assert.Equal(t, 1, git.PullCallCount()) {
 				url, base := git.PullArgsForCall(0)
 				assert.Equal(t, tc.pullRequest.Repository.URL, url)
 				assert.Equal(t, tc.pullRequest.BaseRefName, base)
 			}
 
-			require.Equal(t, 1, git.RevParseCallCount())
-			{
+			if assert.Equal(t, 1, git.RevParseCallCount()) {
 				base := git.RevParseArgsForCall(0)
 				assert.Equal(t, tc.pullRequest.BaseRefName, base)
 			}
 
-			require.Equal(t, 1, git.FetchCallCount())
-			{
+			if assert.Equal(t, 1, git.FetchCallCount()) {
 				url, pr := git.FetchArgsForCall(0)
 				assert.Equal(t, tc.pullRequest.Repository.URL, url)
 				assert.Equal(t, tc.pullRequest.Number, pr)
 			}
 
-			require.Equal(t, 1, git.MergeCallCount())
-			{
+			if assert.Equal(t, 1, git.MergeCallCount()) {
 				tip := git.MergeArgsForCall(0)
 				assert.Equal(t, tc.pullRequest.Tip.OID, tip)
 			}
 
 			if tc.source.GitCryptKey != "" {
-				require.Equal(t, 1, git.GitCryptUnlockCallCount())
-				key := git.GitCryptUnlockArgsForCall(0)
-				assert.Equal(t, tc.source.GitCryptKey, key)
+				if assert.Equal(t, 1, git.GitCryptUnlockCallCount()) {
+					key := git.GitCryptUnlockArgsForCall(0)
+					assert.Equal(t, tc.source.GitCryptKey, key)
+				}
 			}
 
 			// Validate output
-			assert.Equal(t, tc.version, output.Version)
+			if assert.NoError(t, err) {
+				assert.Equal(t, tc.version, output.Version)
 
-			// Verify written files
-			version := readTestFile(t, filepath.Join(dir, ".git", "resource", "version.json"))
-			assert.Equal(t, tc.versionString, version)
+				// Verify written files
+				version := readTestFile(t, filepath.Join(dir, ".git", "resource", "version.json"))
+				assert.Equal(t, tc.versionString, version)
 
-			metadata := readTestFile(t, filepath.Join(dir, ".git", "resource", "metadata.json"))
-			assert.Equal(t, tc.metadataString, metadata)
+				metadata := readTestFile(t, filepath.Join(dir, ".git", "resource", "metadata.json"))
+				assert.Equal(t, tc.metadataString, metadata)
+			}
 		})
 	}
 }
@@ -171,8 +166,9 @@ func TestGetSkipDownload(t *testing.T) {
 			input := resource.GetRequest{Source: tc.source, Version: tc.version, Params: tc.parameters}
 			output, err := resource.Get(input, github, git, dir)
 
-			require.Nil(t, err)
-			assert.Equal(t, tc.version, output.Version)
+			if assert.NoError(t, err) {
+				assert.Equal(t, tc.version, output.Version)
+			}
 		})
 	}
 }
