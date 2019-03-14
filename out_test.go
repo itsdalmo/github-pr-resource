@@ -2,13 +2,13 @@ package resource_test
 
 import (
 	"os"
-	"reflect"
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
-	"github.com/telia-oss/github-pr-resource"
-	"github.com/telia-oss/github-pr-resource/mocks"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	resource "github.com/telia-oss/github-pr-resource"
+	"github.com/telia-oss/github-pr-resource/fakes"
 )
 
 func TestPut(t *testing.T) {
@@ -90,48 +90,46 @@ func TestPut(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.description, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
+			github := new(fakes.FakeGithub)
+			github.GetPullRequestReturns(tc.pullRequest, nil)
 
-			github := mocks.NewMockGithub(ctrl)
-			github.EXPECT().GetPullRequest(tc.version.PR, tc.version.Commit).Times(1).Return(tc.pullRequest, nil)
-
-			git := mocks.NewMockGit(ctrl)
-			gomock.InOrder(
-				git.EXPECT().Init(tc.pullRequest.BaseRefName).Times(1).Return(nil),
-				git.EXPECT().Pull(tc.pullRequest.Repository.URL, tc.pullRequest.BaseRefName).Times(1).Return(nil),
-				git.EXPECT().RevParse(tc.pullRequest.BaseRefName).Times(1).Return("sha", nil),
-				git.EXPECT().Fetch(tc.pullRequest.Repository.URL, tc.pullRequest.Number).Times(1).Return(nil),
-				git.EXPECT().Merge(tc.pullRequest.Tip.OID).Times(1).Return(nil),
-			)
+			git := new(fakes.FakeGit)
+			git.RevParseReturns("sha", nil)
 
 			dir := createTestDirectory(t)
 			defer os.RemoveAll(dir)
 
 			// Run get so we have version and metadata for the put request
+			// (Note: Assertions for method calls on get are handled in in_test.go.)
 			getInput := resource.GetRequest{Source: tc.source, Version: tc.version, Params: resource.GetParameters{}}
 			_, err := resource.Get(getInput, github, git, dir)
 			if err != nil {
 				t.Fatalf("unexpected error: %s", err)
 			}
 
-			// Set expectations
-			if tc.parameters.Status != "" {
-				github.EXPECT().UpdateCommitStatus(tc.version.Commit, tc.parameters.Context, tc.parameters.Status).Times(1).Return(nil)
-			}
-			if tc.parameters.Comment != "" {
-				github.EXPECT().PostComment(tc.version.PR, tc.parameters.Comment).Times(1).Return(nil)
-			}
-
-			// Run put and verify output
 			putInput := resource.PutRequest{Source: tc.source, Params: tc.parameters}
 			output, err := resource.Put(putInput, github, dir)
-			if err != nil {
-				t.Fatalf("unexpected error: %s", err)
+			require.Nil(t, err)
+
+			// Validate method calls put on Github.
+			if tc.parameters.Status != "" {
+				require.Equal(t, 1, github.UpdateCommitStatusCallCount())
+
+				commit, context, status := github.UpdateCommitStatusArgsForCall(0)
+				assert.Equal(t, tc.version.Commit, commit)
+				assert.Equal(t, tc.parameters.Context, context)
+				assert.Equal(t, tc.parameters.Status, status)
 			}
-			if got, want := output.Version, tc.version; !reflect.DeepEqual(got, want) {
-				t.Errorf("\ngot:\n%v\nwant:\n%v\n", got, want)
+			if tc.parameters.Comment != "" {
+				require.Equal(t, 1, github.PostCommentCallCount())
+
+				pr, comment := github.PostCommentArgsForCall(0)
+				assert.Equal(t, tc.version.PR, pr)
+				assert.Equal(t, tc.parameters.Comment, comment)
 			}
+
+			// Validate output
+			assert.Equal(t, tc.version, output.Version)
 		})
 	}
 }

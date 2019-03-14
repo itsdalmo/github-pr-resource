@@ -1,12 +1,12 @@
 package resource_test
 
 import (
-	"reflect"
 	"testing"
 
-	"github.com/golang/mock/gomock"
-	"github.com/telia-oss/github-pr-resource"
-	"github.com/telia-oss/github-pr-resource/mocks"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	resource "github.com/telia-oss/github-pr-resource"
+	"github.com/telia-oss/github-pr-resource/fakes"
 )
 
 var (
@@ -141,29 +141,19 @@ func TestCheck(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.description, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
+			github := new(fakes.FakeGithub)
+			github.ListOpenPullRequestsReturns(tc.pullRequests, nil)
 
-			github := mocks.NewMockGithub(ctrl)
-			github.EXPECT().ListOpenPullRequests().Times(1).Return(tc.pullRequests, nil)
-
-			if len(tc.files) > 0 {
-				// TODO: Figure out how to do this in a loop with variables. As is, it will break when adding new tests.
-				gomock.InOrder(
-					github.EXPECT().ListModifiedFiles(gomock.Any()).Times(1).Return(tc.files[0], nil),
-					github.EXPECT().ListModifiedFiles(gomock.Any()).Times(1).Return(tc.files[1], nil),
-				)
+			for i, file := range tc.files {
+				github.ListModifiedFilesReturnsOnCall(i, file, nil)
 			}
 
 			input := resource.CheckRequest{Source: tc.source, Version: tc.version}
 			output, err := resource.Check(input, github)
-			if err != nil {
-				t.Fatalf("unexpected error: %s", err)
-			}
+			require.Nil(t, err)
 
-			if got, want := output, tc.expected; !reflect.DeepEqual(got, want) {
-				t.Errorf("\ngot:\n%v\nwant:\n%v\n", got, want)
-			}
+			assert.Equal(t, 1, github.ListOpenPullRequestsCallCount())
+			assert.Equal(t, tc.expected, output)
 		})
 	}
 }
@@ -214,9 +204,7 @@ func TestContainsSkipCI(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.description, func(t *testing.T) {
 			got := resource.ContainsSkipCI(tc.message)
-			if got != tc.want {
-				t.Errorf("\ngot:\n%v\nwant:\n%v\n", got, tc.want)
-			}
+			assert.Equal(t, tc.want, got)
 		})
 	}
 }
@@ -282,12 +270,8 @@ func TestFilterPath(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.description, func(t *testing.T) {
 			got, err := resource.FilterPath(tc.files, tc.pattern)
-			if err != nil {
-				t.Fatalf("unexpected error: %s", err)
-			}
-			if !reflect.DeepEqual(got, tc.want) {
-				t.Errorf("\ngot:\n%v\nwant:\n%s\n", got, tc.want)
-			}
+			require.Nil(t, err)
+			assert.Equal(t, tc.want, got)
 		})
 	}
 }
@@ -353,12 +337,8 @@ func TestFilterIgnorePath(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.description, func(t *testing.T) {
 			got, err := resource.FilterIgnorePath(tc.files, tc.pattern)
-			if err != nil {
-				t.Fatalf("unexpected error: %s", err)
-			}
-			if !reflect.DeepEqual(got, tc.want) {
-				t.Errorf("\ngot:\n%v\nwant:\n%s\n", got, tc.want)
-			}
+			require.Nil(t, err)
+			assert.Equal(t, tc.want, got)
 		})
 	}
 }

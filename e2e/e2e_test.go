@@ -10,7 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/telia-oss/github-pr-resource"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	resource "github.com/telia-oss/github-pr-resource"
 )
 
 var (
@@ -200,49 +202,33 @@ func TestGetAndPutE2E(t *testing.T) {
 		t.Run(tc.description, func(t *testing.T) {
 			// Create temporary directory
 			dir, err := ioutil.TempDir("", "github-pr-resource")
-			if err != nil {
-				t.Fatalf("failed to create temporary directory")
-			}
+			require.Nil(t, err)
 			defer os.RemoveAll(dir)
 
 			github, err := resource.NewGithubClient(&tc.source)
-			if err != nil {
-				t.Fatalf("failed to create github client: %s", err)
-			}
+			require.Nil(t, err)
 			git, err := resource.NewGitClient(&tc.source, dir, ioutil.Discard)
-			if err != nil {
-				t.Fatalf("failed to create git client: %s", err)
-			}
+			require.Nil(t, err)
 
 			// Get (output and files)
 			getRequest := resource.GetRequest{Source: tc.source, Version: tc.version, Params: tc.getParameters}
 			getOutput, err := resource.Get(getRequest, github, git, dir)
-			if err != nil {
-				t.Fatalf("unexpected error: %s", err)
-			}
-			if got, want := getOutput.Version, tc.version; !reflect.DeepEqual(got, want) {
-				t.Errorf("\ngot:\n%v\nwant:\n%v\n", got, want)
-			}
+
+			require.Nil(t, err)
+			assert.Equal(t, tc.version, getOutput.Version)
 
 			version := readTestFile(t, filepath.Join(dir, ".git", "resource", "version.json"))
-			if got, want := version, tc.versionString; got != want {
-				t.Errorf("\ngot:\n%v\nwant:\n%v\n", got, want)
-			}
+			assert.Equal(t, tc.versionString, version)
 
 			metadata := readTestFile(t, filepath.Join(dir, ".git", "resource", "metadata.json"))
-			if got, want := metadata, tc.metadataString; got != want {
-				t.Errorf("\ngot:\n%v\nwant:\n%v\n", got, want)
-			}
+			assert.Equal(t, tc.metadataString, metadata)
 
 			// Put
 			putRequest := resource.PutRequest{Source: tc.source, Params: tc.putParameters}
 			putOutput, err := resource.Put(putRequest, github, dir)
-			if err != nil {
-				t.Fatalf("unexpected error: %s", err)
-			}
-			if got, want := putOutput.Version, tc.version; !reflect.DeepEqual(got, want) {
-				t.Errorf("\ngot:\n%v\nwant:\n%v\n", got, want)
-			}
+
+			require.Nil(t, err)
+			assert.Equal(t, tc.version, putOutput.Version)
 		})
 	}
 }

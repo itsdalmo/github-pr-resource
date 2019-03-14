@@ -5,15 +5,15 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strconv"
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	"github.com/shurcooL/githubv4"
-	"github.com/telia-oss/github-pr-resource"
-	"github.com/telia-oss/github-pr-resource/mocks"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	resource "github.com/telia-oss/github-pr-resource"
+	"github.com/telia-oss/github-pr-resource/fakes"
 )
 
 func TestGet(t *testing.T) {
@@ -43,48 +43,96 @@ func TestGet(t *testing.T) {
 			versionString:  `{"pr":"pr1","commit":"commit1","committed":"0001-01-01T00:00:00Z"}`,
 			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"}]`,
 		},
+		{
+			description: "get supports unlocking with git crypt",
+			source: resource.Source{
+				Repository:  "itsdalmo/test-repository",
+				AccessToken: "oauthtoken",
+				GitCryptKey: "gitcryptkey",
+			},
+			version: resource.Version{
+				PR:            "pr1",
+				Commit:        "commit1",
+				CommittedDate: time.Time{},
+			},
+			parameters:     resource.GetParameters{},
+			pullRequest:    createTestPR(1, false, false),
+			versionString:  `{"pr":"pr1","commit":"commit1","committed":"0001-01-01T00:00:00Z"}`,
+			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"}]`,
+		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.description, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
+			github := new(fakes.FakeGithub)
+			github.GetPullRequestReturns(tc.pullRequest, nil)
 
-			github := mocks.NewMockGithub(ctrl)
-			github.EXPECT().GetPullRequest(tc.version.PR, tc.version.Commit).Times(1).Return(tc.pullRequest, nil)
-
-			git := mocks.NewMockGit(ctrl)
-			gomock.InOrder(
-				git.EXPECT().Init(tc.pullRequest.BaseRefName).Times(1).Return(nil),
-				git.EXPECT().Pull(tc.pullRequest.Repository.URL, tc.pullRequest.BaseRefName).Times(1).Return(nil),
-				git.EXPECT().RevParse(tc.pullRequest.BaseRefName).Times(1).Return("sha", nil),
-				git.EXPECT().Fetch(tc.pullRequest.Repository.URL, tc.pullRequest.Number).Times(1).Return(nil),
-				git.EXPECT().Merge(tc.pullRequest.Tip.OID).Times(1).Return(nil),
-			)
+			git := new(fakes.FakeGit)
+			git.RevParseReturns("sha", nil)
 
 			dir := createTestDirectory(t)
 			defer os.RemoveAll(dir)
 
-			// Run the get and check output
 			input := resource.GetRequest{Source: tc.source, Version: tc.version, Params: tc.parameters}
 			output, err := resource.Get(input, github, git, dir)
-			if err != nil {
-				t.Fatalf("unexpected error: %s", err)
+			require.Nil(t, err)
+
+			// Validate Github calls
+			require.Equal(t, 1, github.GetPullRequestCallCount())
+			{
+				pr, commit := github.GetPullRequestArgsForCall(0)
+				assert.Equal(t, tc.version.PR, pr)
+				assert.Equal(t, tc.version.Commit, commit)
 			}
-			if got, want := output.Version, tc.version; !reflect.DeepEqual(got, want) {
-				t.Errorf("\ngot:\n%v\nwant:\n%v\n", got, want)
+
+			// Validate Git calls
+			require.Equal(t, 1, git.InitCallCount())
+			{
+				base := git.InitArgsForCall(0)
+				assert.Equal(t, tc.pullRequest.BaseRefName, base)
 			}
+
+			require.Equal(t, 1, git.PullCallCount())
+			{
+				url, base := git.PullArgsForCall(0)
+				assert.Equal(t, tc.pullRequest.Repository.URL, url)
+				assert.Equal(t, tc.pullRequest.BaseRefName, base)
+			}
+
+			require.Equal(t, 1, git.RevParseCallCount())
+			{
+				base := git.RevParseArgsForCall(0)
+				assert.Equal(t, tc.pullRequest.BaseRefName, base)
+			}
+
+			require.Equal(t, 1, git.FetchCallCount())
+			{
+				url, pr := git.FetchArgsForCall(0)
+				assert.Equal(t, tc.pullRequest.Repository.URL, url)
+				assert.Equal(t, tc.pullRequest.Number, pr)
+			}
+
+			require.Equal(t, 1, git.MergeCallCount())
+			{
+				tip := git.MergeArgsForCall(0)
+				assert.Equal(t, tc.pullRequest.Tip.OID, tip)
+			}
+
+			if tc.source.GitCryptKey != "" {
+				require.Equal(t, 1, git.GitCryptUnlockCallCount())
+				key := git.GitCryptUnlockArgsForCall(0)
+				assert.Equal(t, tc.source.GitCryptKey, key)
+			}
+
+			// Validate output
+			assert.Equal(t, tc.version, output.Version)
 
 			// Verify written files
 			version := readTestFile(t, filepath.Join(dir, ".git", "resource", "version.json"))
-			if got, want := version, tc.versionString; got != want {
-				t.Errorf("\ngot:\n%v\nwant:\n%v\n", got, want)
-			}
+			assert.Equal(t, tc.versionString, version)
 
 			metadata := readTestFile(t, filepath.Join(dir, ".git", "resource", "metadata.json"))
-			if got, want := metadata, tc.metadataString; got != want {
-				t.Errorf("\ngot:\n%v\nwant:\n%v\n", got, want)
-			}
+			assert.Equal(t, tc.metadataString, metadata)
 		})
 	}
 }
@@ -114,98 +162,17 @@ func TestGetSkipDownload(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.description, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-
-			github := mocks.NewMockGithub(ctrl)
-			git := mocks.NewMockGit(ctrl)
+			github := new(fakes.FakeGithub)
+			git := new(fakes.FakeGit)
 			dir := createTestDirectory(t)
 			defer os.RemoveAll(dir)
 
 			// Run the get and check output
 			input := resource.GetRequest{Source: tc.source, Version: tc.version, Params: tc.parameters}
 			output, err := resource.Get(input, github, git, dir)
-			if err != nil {
-				t.Fatalf("unexpected error: %s", err)
-			}
-			if got, want := output.Version, tc.version; !reflect.DeepEqual(got, want) {
-				t.Errorf("\ngot:\n%v\nwant:\n%v\n", got, want)
-			}
-		})
-	}
-}
 
-func TestGetGitCrypt(t *testing.T) {
-
-	tests := []struct {
-		description    string
-		source         resource.Source
-		version        resource.Version
-		parameters     resource.GetParameters
-		pullRequest    *resource.PullRequest
-		versionString  string
-		metadataString string
-	}{
-		{
-			description: "get works",
-			source: resource.Source{
-				Repository:  "itsdalmo/test-repository",
-				AccessToken: "oauthtoken",
-				GitCryptKey: "gitcryptkey",
-			},
-			version: resource.Version{
-				PR:            "pr1",
-				Commit:        "commit1",
-				CommittedDate: time.Time{},
-			},
-			parameters:     resource.GetParameters{},
-			pullRequest:    createTestPR(1, false, false),
-			versionString:  `{"pr":"pr1","commit":"commit1","committed":"0001-01-01T00:00:00Z"}`,
-			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"}]`,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.description, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-
-			github := mocks.NewMockGithub(ctrl)
-			github.EXPECT().GetPullRequest(tc.version.PR, tc.version.Commit).Times(1).Return(tc.pullRequest, nil)
-
-			git := mocks.NewMockGit(ctrl)
-			gomock.InOrder(
-				git.EXPECT().Init(tc.pullRequest.BaseRefName).Times(1).Return(nil),
-				git.EXPECT().Pull(tc.pullRequest.Repository.URL, tc.pullRequest.BaseRefName).Times(1).Return(nil),
-				git.EXPECT().RevParse(tc.pullRequest.BaseRefName).Times(1).Return("sha", nil),
-				git.EXPECT().Fetch(tc.pullRequest.Repository.URL, tc.pullRequest.Number).Times(1).Return(nil),
-				git.EXPECT().Merge(tc.pullRequest.Tip.OID).Times(1).Return(nil),
-				git.EXPECT().GitCryptUnlock(tc.source.GitCryptKey).Times(1).Return(nil),
-			)
-
-			dir := createTestDirectory(t)
-			defer os.RemoveAll(dir)
-
-			// Run the get and check output
-			input := resource.GetRequest{Source: tc.source, Version: tc.version, Params: tc.parameters}
-			output, err := resource.Get(input, github, git, dir)
-			if err != nil {
-				t.Fatalf("unexpected error: %s", err)
-			}
-			if got, want := output.Version, tc.version; !reflect.DeepEqual(got, want) {
-				t.Errorf("\ngot:\n%v\nwant:\n%v\n", got, want)
-			}
-
-			// Verify written files
-			version := readTestFile(t, filepath.Join(dir, ".git", "resource", "version.json"))
-			if got, want := version, tc.versionString; got != want {
-				t.Errorf("\ngot:\n%v\nwant:\n%v\n", got, want)
-			}
-
-			metadata := readTestFile(t, filepath.Join(dir, ".git", "resource", "metadata.json"))
-			if got, want := metadata, tc.metadataString; got != want {
-				t.Errorf("\ngot:\n%v\nwant:\n%v\n", got, want)
-			}
+			require.Nil(t, err)
+			assert.Equal(t, tc.version, output.Version)
 		})
 	}
 }
