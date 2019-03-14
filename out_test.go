@@ -108,6 +108,11 @@ func TestPut(t *testing.T) {
 			putInput := resource.PutRequest{Source: tc.source, Params: tc.parameters}
 			output, err := resource.Put(putInput, github, dir)
 
+			// Validate output
+			if assert.NoError(t, err) {
+				assert.Equal(t, tc.version, output.Version)
+			}
+
 			// Validate method calls put on Github.
 			if tc.parameters.Status != "" {
 				if assert.Equal(t, 1, github.UpdateCommitStatusCallCount()) {
@@ -123,11 +128,6 @@ func TestPut(t *testing.T) {
 					assert.Equal(t, tc.version.PR, pr)
 					assert.Equal(t, tc.parameters.Comment, comment)
 				}
-			}
-
-			// Validate output
-			if assert.NoError(t, err) {
-				assert.Equal(t, tc.version, output.Version)
 			}
 		})
 	}

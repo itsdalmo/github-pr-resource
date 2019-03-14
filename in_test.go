@@ -75,6 +75,18 @@ func TestGet(t *testing.T) {
 			input := resource.GetRequest{Source: tc.source, Version: tc.version, Params: tc.parameters}
 			output, err := resource.Get(input, github, git, dir)
 
+			// Validate output
+			if assert.NoError(t, err) {
+				assert.Equal(t, tc.version, output.Version)
+
+				// Verify written files
+				version := readTestFile(t, filepath.Join(dir, ".git", "resource", "version.json"))
+				assert.Equal(t, tc.versionString, version)
+
+				metadata := readTestFile(t, filepath.Join(dir, ".git", "resource", "metadata.json"))
+				assert.Equal(t, tc.metadataString, metadata)
+			}
+
 			// Validate Github calls
 			if assert.Equal(t, 1, github.GetPullRequestCallCount()) {
 				pr, commit := github.GetPullRequestArgsForCall(0)
@@ -115,18 +127,6 @@ func TestGet(t *testing.T) {
 					key := git.GitCryptUnlockArgsForCall(0)
 					assert.Equal(t, tc.source.GitCryptKey, key)
 				}
-			}
-
-			// Validate output
-			if assert.NoError(t, err) {
-				assert.Equal(t, tc.version, output.Version)
-
-				// Verify written files
-				version := readTestFile(t, filepath.Join(dir, ".git", "resource", "version.json"))
-				assert.Equal(t, tc.versionString, version)
-
-				metadata := readTestFile(t, filepath.Join(dir, ".git", "resource", "metadata.json"))
-				assert.Equal(t, tc.metadataString, metadata)
 			}
 		})
 	}

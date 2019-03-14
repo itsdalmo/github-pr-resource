@@ -150,10 +150,10 @@ func TestCheck(t *testing.T) {
 			input := resource.CheckRequest{Source: tc.source, Version: tc.version}
 			output, err := resource.Check(input, github)
 
-			assert.Equal(t, 1, github.ListOpenPullRequestsCallCount())
 			if assert.NoError(t, err) {
 				assert.Equal(t, tc.expected, output)
 			}
+			assert.Equal(t, 1, github.ListOpenPullRequestsCallCount())
 		})
 	}
 }
