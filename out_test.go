@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	resource "github.com/telia-oss/github-pr-resource"
 	"github.com/telia-oss/github-pr-resource/fakes"
 )
@@ -99,12 +100,10 @@ func TestPut(t *testing.T) {
 			defer os.RemoveAll(dir)
 
 			// Run get so we have version and metadata for the put request
-			// (Note: Assertions for method calls on get are handled in in_test.go.)
+			// (This is tested in in_test.go)
 			getInput := resource.GetRequest{Source: tc.source, Version: tc.version, Params: resource.GetParameters{}}
 			_, err := resource.Get(getInput, github, git, dir)
-			if err != nil {
-				t.Fatalf("unexpected error: %s", err)
-			}
+			require.NoError(t, err)
 
 			putInput := resource.PutRequest{Source: tc.source, Params: tc.parameters}
 			output, err := resource.Put(putInput, github, dir)

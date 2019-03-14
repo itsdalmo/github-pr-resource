@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"reflect"
 	"testing"
 	"time"
 
@@ -115,17 +114,13 @@ func TestCheckE2E(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.description, func(t *testing.T) {
 			github, err := resource.NewGithubClient(&tc.source)
-			if err != nil {
-				t.Fatalf("failed to create github client: %s", err)
-			}
+			require.NoError(t, err)
 
 			input := resource.CheckRequest{Source: tc.source, Version: tc.version}
 			output, err := resource.Check(input, github)
-			if err != nil {
-				t.Fatalf("unexpected error: %s", err)
-			}
-			if got, want := output, tc.expected; !reflect.DeepEqual(got, want) {
-				t.Errorf("\ngot:\n%v\nwant:\n%v\n", got, want)
+
+			if assert.NoError(t, err) {
+				assert.Equal(t, tc.expected, output)
 			}
 		})
 	}
