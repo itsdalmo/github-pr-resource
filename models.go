@@ -20,6 +20,7 @@ type Source struct {
 	SkipSSLVerification bool     `json:"skip_ssl_verification"`
 	DisableForks        bool     `json:"disable_forks"`
 	GitCryptKey         string   `json:"git_crypt_key"`
+	BaseBranch          string   `json:"baseBranch"`
 }
 
 // Validate the source configuration.
