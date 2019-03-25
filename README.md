@@ -31,6 +31,7 @@ Make sure to check out [#migrating](#migrating) to learn more.
 | `skip_ssl_verification` | No       | `true`                           | Disable SSL/TLS certificate validation on git and API clients. Use with care!                                                                                                                                                                                                              |
 | `disable_forks`         | No       | `true`                           | Disable triggering of the resource if the pull request's fork repository is different to the configured repository.                                                                                                                                                                        |
 | `git_crypt_key`         | No       | `AEdJVENSWVBUS0VZAAAAA...`       | Base64 encoded git-crypt key. Setting this will unlock / decrypt the repository with git-crypt. To get the key simply execute `git-crypt export-key -- - | base64` in an encrypted repository.
+               |
 
 | `BaseBranch`             | No       | `master`                         | Name of the BaseBranch. The pipeline will only listen to pullrequests that want to merge into the specified branch. The pipeline will listen to every pullrequest if nothin is specified.                          
 
