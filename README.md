@@ -33,7 +33,8 @@ Make sure to check out [#migrating](#migrating) to learn more.
 | `git_crypt_key`         | No       | `AEdJVENSWVBUS0VZAAAAA...`       | Base64 encoded git-crypt key. Setting this will unlock / decrypt the repository with git-crypt. To get the key simply execute `git-crypt export-key -- - | base64` in an encrypted repository.
                             |
 | `BaseBranch`             | No       | `master`                         | Name of the BaseBranch. The pipeline will only listen to pullrequests that want to merge into the specified branch. The pipeline will listen to every pullrequest if nothin is specified.                          
-
+                            |
+                            
 Notes:
  - If `v3_endpoint` is set, `v4_endpoint` must also be set (and the other way around).
  - Look at the [Concourse Resources documentation](https://concourse-ci.org/resources.html#resource-webhook-token)
