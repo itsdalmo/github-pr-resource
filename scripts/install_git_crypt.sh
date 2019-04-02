@@ -3,7 +3,8 @@
 set -eu
 
 _main() {
-  apk add --update --no-cache curl make g++ libressl libressl-dev
+  apk --update add --virtual=.build-deps curl make g++ openssl-dev
+  apk add --no-cache libgcc libstdc++ openssl
   local tmpdir
   tmpdir="$(mktemp -d git_crypt_install.XXXXXX)"
 
@@ -16,7 +17,8 @@ _main() {
   cd ..
   rm -rf "$tmpdir"
 
-  apk del curl make libressl libressl-dev
+  apk del .build-deps
+  rm -rf /var/cache/apk/*
 }
 
 _main "$@"
