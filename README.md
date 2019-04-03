@@ -53,7 +53,7 @@ A version is represented as follows:
 If several commits are pushed to a given PR at the same time, the last commit will be the new version.
 
 **Note on webhooks:**
-This resource does not implement any caching, so it should work well with webhooks (should be subscribed to `push` events).
+This resource does not implement any caching, so it should work well with webhooks (should be subscribed to `push` and `pull_request` events).
 One thing to keep in mind however, is that pull requests that are opened from a fork and commits to said fork will not
 generate notifications over the webhook. So if you have a repository with little traffic and expect pull requests from forks,
  you'll need to discover those versions with `check_every: 1m` for instance. `check` in this resource is not a costly operation,
@@ -215,3 +215,7 @@ If you are coming from [jtarchie/github-pullrequest-resource][original-resource]
 - `put`:
   - `merge.*`
   - `label`
+
+Note that if you are migrating from the original resource on a Concourse version prior to `v5.0.0`, you might
+see an error `failed to unmarshal request: json: unknown field "ref"`. The solution is to rename the resource
+so that the history is wiped. See [#64](https://github.com/telia-oss/github-pr-resource/issues/64) for details.
