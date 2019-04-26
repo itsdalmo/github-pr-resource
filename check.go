@@ -30,7 +30,7 @@ Loop:
 			continue
 		}
 		// Filter pull request if the BaseBranch does not match the one specified in source
-		if p.PullRequestObject.BaseRefName != request.Source.BaseBranch && len(request.Source.BaseBranch) > 0 {
+		if request.Source.BaseBranch != "" && p.PullRequestObject.BaseRefName != request.Source.BaseBranch {
 			continue
 		}
 		// Filter out commits that are too old.
