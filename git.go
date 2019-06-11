@@ -78,7 +78,7 @@ func (g *GitClient) Pull(uri, branch string, depth int) error {
 
 	args := []string{"pull", endpoint + ".git", branch}
 	if depth > 0 {
-		args = append(args, "--depth", strconv.Itoa(depth))
+		args = append(args, "--recurse-submodules", "--depth", strconv.Itoa(depth))
 	}
 	cmd := g.command("git", args...)
 
