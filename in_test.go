@@ -153,10 +153,10 @@ func TestGet(t *testing.T) {
 			}
 
 			if assert.Equal(t, 1, git.PullCallCount()) {
-				url, base := git.PullArgsForCall(0)
+				url, base, depth := git.PullArgsForCall(0)
 				assert.Equal(t, tc.pullRequest.Repository.URL, url)
 				assert.Equal(t, tc.pullRequest.BaseRefName, base)
-				// assert.Equal(t, tc.parameters.GitDepth, depth)
+				assert.Equal(t, tc.parameters.GitDepth, depth)
 			}
 
 			if assert.Equal(t, 1, git.RevParseCallCount()) {
