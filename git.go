@@ -71,17 +71,16 @@ func (g *GitClient) Init(branch string) error {
 }
 
 // Pull ...
-func (g *GitClient) Pull(uri, branch string, depth int) error {
+func (g *GitClient) Clone(uri, branch string, depth int) error {
 	endpoint, err := g.Endpoint(uri)
 	if err != nil {
 		return err
 	}
 
-	args := []string{"pull", endpoint + ".git", branch}
-	if depth > 0 {
-		args = append(args, "--depth", strconv.Itoa(depth))
-	}
-	args = append(args, "--recurse-submodules")
+	args := []string{"clone --recursive", endpoint + ".git", branch}
+// 	if depth > 0 {
+// 		args = append(args, "--depth", strconv.Itoa(depth))
+// 	}
 	cmd := g.command("git", args...)
 
 	// Discard output to have zero chance of logging the access token.
