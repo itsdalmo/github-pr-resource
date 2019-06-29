@@ -1,7 +1,7 @@
 ## Github PR resource
 
-[![Build Status](https://travis-ci.org/djirik/github-pr-resource.svg?branch=master)](https://travis-ci.org/djirik/github-pr-resource)
-[![Go Report Card](https://goreportcard.com/badge/github.com/djirik/github-pr-resource)](https://goreportcard.com/report/github.com/djirik/github-pr-resource)
+[![Build Status](https://travis-ci.org/telia-oss/github-pr-resource.svg?branch=master)](https://travis-ci.org/telia-oss/github-pr-resource)
+[![Go Report Card](https://goreportcard.com/badge/github.com/telia-oss/github-pr-resource)](https://goreportcard.com/report/github.com/telia-oss/github-pr-resource)
 [![Docker Automated build](https://img.shields.io/docker/automated/teliaoss/github-pr-resource.svg)](https://hub.docker.com/r/teliaoss/github-pr-resource/)
 
 [graphql-api]: https://developer.github.com/v4
@@ -76,7 +76,7 @@ requested version and the metadata emitted by `get` are available to your tasks 
 
 When specifying `skip_download` the pull request volume mounted to subsequent tasks will be empty, which is a problem
 when you set e.g. the pending status before running the actual tests. The workaround for this is to use an alias for
-the `put` (see https://github.com/djirik/github-pr-resource/issues/32 for more details).
+the `put` (see https://github.com/telia-oss/github-pr-resource/issues/32 for more details).
 
 git-crypt encrypted repositories will automatically be decrypted when the `git_crypt_key` is set in the source configuration.
 
@@ -228,4 +228,4 @@ If you are coming from [jtarchie/github-pullrequest-resource][original-resource]
 
 Note that if you are migrating from the original resource on a Concourse version prior to `v5.0.0`, you might
 see an error `failed to unmarshal request: json: unknown field "ref"`. The solution is to rename the resource
-so that the history is wiped. See [#64](https://github.com/djirik/github-pr-resource/issues/64) for details.
+so that the history is wiped. See [#64](https://github.com/telia-oss/github-pr-resource/issues/64) for details.
