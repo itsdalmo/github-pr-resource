@@ -82,9 +82,13 @@ func (g *GitClient) Pull(uri, branch string) error {
 // 	if depth > 0 {
 // 		args = append(args, "--depth", strconv.Itoa(depth))
 // 	}
-	configline := fmt.Sprintf("git config --global url.'https://%s:x-oauth-basic@github.com/'.insteadOf 'git@github.com:'", g.AccessToken)
-	cmdconfig := g.command(configline)
-	cmdconfig.Run()
+	// configline := fmt.Sprintf("git config --global url.'https://x-oauth-basic:%s@github.com/'.insteadOf 'git@github.com:'", g.AccessToken)
+	// cmdconfig := g.command(configline)
+	// if err := cmdconfig.Run(); err != nil {
+	// 	return fmt.Errorf("git config failed: %[1]s, command was: %[2]s", err, configline)
+	// }
+	url := fmt.Sprintf("url.'https://x-oauth-basic:%s@github.com/'.insteadOf", g.AccessToken)
+	exec.Command("git", "config", url, "'git@github.com:'")
 	cmd := g.command("git", args...)
 
 	// Discard output to have zero chance of logging the access token.
