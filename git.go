@@ -114,7 +114,9 @@ func (g *GitClient) Fetch(uri string, prNumber int, depth int) error {
 	args := []string{"fetch", endpoint, fmt.Sprintf("pull/%s/head", strconv.Itoa(prNumber))}
 	if depth > 0 {
 		args = append(args, "--depth", strconv.Itoa(depth))
+		
 	}
+	args = append(args, "--recurse-submodules")
 	cmd := g.command("git", args...)
 
 	// Discard output to have zero chance of logging the access token.
