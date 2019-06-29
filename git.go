@@ -81,6 +81,7 @@ func (g *GitClient) Pull(uri, branch string, depth int) error {
 	if depth > 0 {
 		args = append(args, "--depth", strconv.Itoa(depth))
 	}
+	args = append(args, "--recurse-submodules")
 	cmd := g.command("git", args...)
 
 	// Discard output to have zero chance of logging the access token.
@@ -116,7 +117,7 @@ func (g *GitClient) Fetch(uri string, prNumber int, depth int) error {
 		args = append(args, "--depth", strconv.Itoa(depth))
 		
 	}
-	args = append(args, "--recurse-submodules")
+	
 	cmd := g.command("git", args...)
 
 	// Discard output to have zero chance of logging the access token.
