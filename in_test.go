@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
+	resource "github.com/djirik/github-pr-resource"
+	"github.com/djirik/github-pr-resource/fakes"
 	"github.com/shurcooL/githubv4"
 	"github.com/stretchr/testify/assert"
-	resource "github.com/telia-oss/github-pr-resource"
-	"github.com/telia-oss/github-pr-resource/fakes"
 )
 
 func TestGet(t *testing.T) {
@@ -153,10 +153,10 @@ func TestGet(t *testing.T) {
 			}
 
 			if assert.Equal(t, 1, git.PullCallCount()) {
-				url, base, depth := git.PullArgsForCall(0)
+				url, base := git.PullArgsForCall(0)
 				assert.Equal(t, tc.pullRequest.Repository.URL, url)
 				assert.Equal(t, tc.pullRequest.BaseRefName, base)
-				assert.Equal(t, tc.parameters.GitDepth, depth)
+				// assert.Equal(t, tc.parameters.GitDepth, depth)
 			}
 
 			if assert.Equal(t, 1, git.RevParseCallCount()) {

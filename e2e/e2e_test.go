@@ -13,7 +13,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	resource "github.com/telia-oss/github-pr-resource"
+	resource "github.com/djirik/github-pr-resource"
 )
 
 var (

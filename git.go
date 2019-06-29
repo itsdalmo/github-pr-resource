@@ -17,7 +17,7 @@ import (
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -o fakes/fake_git.go . Git
 type Git interface {
 	Init(string) error
-	Pull(string, string, int) error
+	Pull(string, string) error
 	RevParse(string) (string, error)
 	Fetch(string, int, int) error
 	Checkout(string, string) error
@@ -71,16 +71,20 @@ func (g *GitClient) Init(branch string) error {
 }
 
 // Pull ...
-func (g *GitClient) Clone(uri, branch string, depth int) error {
+func (g *GitClient) Pull(uri, branch string) error {
 	endpoint, err := g.Endpoint(uri)
 	if err != nil {
 		return err
 	}
 
-	args := []string{"clone --recursive", endpoint + ".git", branch}
+	args := []string{"clone --recursive", endpoint + ".git", "--single-branch --branch", branch}
+	fmt.Printf("%v", args)
 // 	if depth > 0 {
 // 		args = append(args, "--depth", strconv.Itoa(depth))
 // 	}
+	configline := fmt.Sprintf("git config --global url.'https://%s:x-oauth-basic@github.com/'.insteadOf 'git@github.com:'", g.AccessToken)
+	cmdconfig := g.command(configline)
+	cmdconfig.Run()
 	cmd := g.command("git", args...)
 
 	// Discard output to have zero chance of logging the access token.
@@ -88,7 +92,7 @@ func (g *GitClient) Clone(uri, branch string, depth int) error {
 	cmd.Stderr = ioutil.Discard
 
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("clone failed: %s", err)
+		return fmt.Errorf("clone failed: %[1]s, command was: %[2]v", err, args)
 	}
 	return nil
 }
@@ -181,6 +185,9 @@ func (g *GitClient) Endpoint(uri string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to parse commit url: %s", err)
 	}
+	configline := fmt.Sprintf("git config --global url.'https://%s:x-oauth-basic@github.com/'.insteadOf 'git@github.com:'", g.AccessToken)
+	cmdconfig := g.command(configline)
+	cmdconfig.Run()
 	endpoint.User = url.UserPassword("x-oauth-basic", g.AccessToken)
 	return endpoint.String(), nil
 }

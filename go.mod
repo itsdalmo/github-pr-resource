@@ -1,4 +1,4 @@
-module github.com/telia-oss/github-pr-resource
+module github.com/djirik/github-pr-resource
 
 require (
 	github.com/google/go-github v17.0.0+incompatible

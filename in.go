@@ -21,10 +21,10 @@ func Get(request GetRequest, github Github, git Git, outputDir string) (*GetResp
 	}
 
 	// Initialize and pull the base for the PR
-	if err := git.Init(pull.BaseRefName); err != nil {
-		return nil, err
-	}
-	if err := git.Pull(pull.Repository.URL, pull.BaseRefName, request.Params.GitDepth); err != nil {
+	// if err := git.Init(pull.BaseRefName); err != nil {
+	// 	return nil, err
+	// }
+	if err := git.Pull(pull.Repository.URL, pull.BaseRefName); err != nil {
 		return nil, err
 	}
 

@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	resource "github.com/telia-oss/github-pr-resource"
-	"github.com/telia-oss/github-pr-resource/fakes"
+	resource "github.com/djirik/github-pr-resource"
+	"github.com/djirik/github-pr-resource/fakes"
 )
 
 var (
