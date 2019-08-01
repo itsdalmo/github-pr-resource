@@ -35,9 +35,9 @@ func TestGet(t *testing.T) {
 				AccessToken: "oauthtoken",
 			},
 			version: resource.Version{
-				PR:            "pr1",
-				Commit:        "commit1",
-				CommittedDate: time.Time{},
+				PR:          "pr1",
+				Commit:      "commit1",
+				ChangedDate: time.Time{},
 			},
 			parameters:     resource.GetParameters{},
 			pullRequest:    createTestPR(1, "master", false, false),
@@ -52,9 +52,9 @@ func TestGet(t *testing.T) {
 				GitCryptKey: "gitcryptkey",
 			},
 			version: resource.Version{
-				PR:            "pr1",
-				Commit:        "commit1",
-				CommittedDate: time.Time{},
+				PR:          "pr1",
+				Commit:      "commit1",
+				ChangedDate: time.Time{},
 			},
 			parameters:     resource.GetParameters{},
 			pullRequest:    createTestPR(1, "master", false, false),
@@ -68,9 +68,9 @@ func TestGet(t *testing.T) {
 				AccessToken: "oauthtoken",
 			},
 			version: resource.Version{
-				PR:            "pr1",
-				Commit:        "commit1",
-				CommittedDate: time.Time{},
+				PR:          "pr1",
+				Commit:      "commit1",
+				ChangedDate: time.Time{},
 			},
 			parameters: resource.GetParameters{
 				IntegrationTool: "rebase",
@@ -86,9 +86,9 @@ func TestGet(t *testing.T) {
 				AccessToken: "oauthtoken",
 			},
 			version: resource.Version{
-				PR:            "pr1",
-				Commit:        "commit1",
-				CommittedDate: time.Time{},
+				PR:          "pr1",
+				Commit:      "commit1",
+				ChangedDate: time.Time{},
 			},
 			parameters: resource.GetParameters{
 				IntegrationTool: "checkout",
@@ -104,9 +104,9 @@ func TestGet(t *testing.T) {
 				AccessToken: "oauthtoken",
 			},
 			version: resource.Version{
-				PR:            "pr1",
-				Commit:        "commit1",
-				CommittedDate: time.Time{},
+				PR:          "pr1",
+				Commit:      "commit1",
+				ChangedDate: time.Time{},
 			},
 			parameters: resource.GetParameters{
 				GitDepth: 2,
@@ -122,9 +122,9 @@ func TestGet(t *testing.T) {
 				AccessToken: "oauthtoken",
 			},
 			version: resource.Version{
-				PR:            "pr1",
-				Commit:        "commit1",
-				CommittedDate: time.Time{},
+				PR:          "pr1",
+				Commit:      "commit1",
+				ChangedDate: time.Time{},
 			},
 			parameters: resource.GetParameters{
 				ListChangedFiles: true,
@@ -272,9 +272,9 @@ func TestGetSkipDownload(t *testing.T) {
 				AccessToken: "oauthtoken",
 			},
 			version: resource.Version{
-				PR:            "pr1",
-				Commit:        "commit1",
-				CommittedDate: time.Time{},
+				PR:          "pr1",
+				Commit:      "commit1",
+				ChangedDate: time.Time{},
 			},
 			parameters: resource.GetParameters{SkipDownload: true},
 		},

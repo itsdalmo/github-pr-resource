@@ -28,9 +28,9 @@ func TestPut(t *testing.T) {
 				AccessToken: "oauthtoken",
 			},
 			version: resource.Version{
-				PR:            "pr1",
-				Commit:        "commit1",
-				CommittedDate: time.Time{},
+				PR:          "pr1",
+				Commit:      "commit1",
+				ChangedDate: time.Time{},
 			},
 			parameters:  resource.PutParameters{},
 			pullRequest: createTestPR(1, "master", false, false),
@@ -43,9 +43,9 @@ func TestPut(t *testing.T) {
 				AccessToken: "oauthtoken",
 			},
 			version: resource.Version{
-				PR:            "pr1",
-				Commit:        "commit1",
-				CommittedDate: time.Time{},
+				PR:          "pr1",
+				Commit:      "commit1",
+				ChangedDate: time.Time{},
 			},
 			parameters: resource.PutParameters{
 				Status: "success",
@@ -60,9 +60,9 @@ func TestPut(t *testing.T) {
 				AccessToken: "oauthtoken",
 			},
 			version: resource.Version{
-				PR:            "pr1",
-				Commit:        "commit1",
-				CommittedDate: time.Time{},
+				PR:          "pr1",
+				Commit:      "commit1",
+				ChangedDate: time.Time{},
 			},
 			parameters: resource.PutParameters{
 				Status:  "failure",
@@ -78,9 +78,9 @@ func TestPut(t *testing.T) {
 				AccessToken: "oauthtoken",
 			},
 			version: resource.Version{
-				PR:            "pr1",
-				Commit:        "commit1",
-				CommittedDate: time.Time{},
+				PR:          "pr1",
+				Commit:      "commit1",
+				ChangedDate: time.Time{},
 			},
 			parameters: resource.PutParameters{
 				Status:      "failure",
@@ -97,9 +97,9 @@ func TestPut(t *testing.T) {
 				AccessToken: "oauthtoken",
 			},
 			version: resource.Version{
-				PR:            "pr1",
-				Commit:        "commit1",
-				CommittedDate: time.Time{},
+				PR:          "pr1",
+				Commit:      "commit1",
+				ChangedDate: time.Time{},
 			},
 			parameters: resource.PutParameters{
 				Status:    "failure",
@@ -115,9 +115,9 @@ func TestPut(t *testing.T) {
 				AccessToken: "oauthtoken",
 			},
 			version: resource.Version{
-				PR:            "pr1",
-				Commit:        "commit1",
-				CommittedDate: time.Time{},
+				PR:          "pr1",
+				Commit:      "commit1",
+				ChangedDate: time.Time{},
 			},
 			parameters: resource.PutParameters{
 				Status:      "failure",
@@ -133,9 +133,9 @@ func TestPut(t *testing.T) {
 				AccessToken: "oauthtoken",
 			},
 			version: resource.Version{
-				PR:            "pr1",
-				Commit:        "commit1",
-				CommittedDate: time.Time{},
+				PR:          "pr1",
+				Commit:      "commit1",
+				ChangedDate: time.Time{},
 			},
 			parameters: resource.PutParameters{
 				Comment: "comment",
@@ -217,9 +217,9 @@ func TestVariableSubstitution(t *testing.T) {
 				AccessToken: "oauthtoken",
 			},
 			version: resource.Version{
-				PR:            "pr1",
-				Commit:        "commit1",
-				CommittedDate: time.Time{},
+				PR:          "pr1",
+				Commit:      "commit1",
+				ChangedDate: time.Time{},
 			},
 			parameters: resource.PutParameters{
 				Comment: fmt.Sprintf("$%s", variableName),
@@ -235,9 +235,9 @@ func TestVariableSubstitution(t *testing.T) {
 				AccessToken: "oauthtoken",
 			},
 			version: resource.Version{
-				PR:            "pr1",
-				Commit:        "commit1",
-				CommittedDate: time.Time{},
+				PR:          "pr1",
+				Commit:      "commit1",
+				ChangedDate: time.Time{},
 			},
 			parameters: resource.PutParameters{
 				Status:    "failure",

@@ -33,10 +33,6 @@ Loop:
 		if request.Source.BaseBranch != "" && p.PullRequestObject.BaseRefName != request.Source.BaseBranch {
 			continue
 		}
-		// Filter out commits that are too old.
-		if !p.Tip.CommittedDate.Time.After(request.Version.CommittedDate) {
-			continue
-		}
 
 		if request.Source.DisableForks && p.IsCrossRepository {
 			continue
@@ -166,7 +162,7 @@ func (r CheckResponse) Len() int {
 }
 
 func (r CheckResponse) Less(i, j int) bool {
-	return r[j].CommittedDate.After(r[i].CommittedDate)
+	return r[j].ChangedDate.After(r[i].ChangedDate)
 }
 
 func (r CheckResponse) Swap(i, j int) {

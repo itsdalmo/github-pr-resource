@@ -44,7 +44,7 @@ func TestCheckE2E(t *testing.T) {
 			},
 			version: resource.Version{},
 			expected: resource.CheckResponse{
-				resource.Version{PR: latestPullRequestID, Commit: latestCommitID, CommittedDate: latestDateTime},
+				resource.Version{PR: latestPullRequestID, Commit: latestCommitID, ChangedDate: latestDateTime},
 			},
 		},
 
@@ -54,9 +54,9 @@ func TestCheckE2E(t *testing.T) {
 				Repository:  "itsdalmo/test-repository",
 				AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN"),
 			},
-			version: resource.Version{PR: latestPullRequestID, Commit: latestCommitID, CommittedDate: latestDateTime},
+			version: resource.Version{PR: latestPullRequestID, Commit: latestCommitID, ChangedDate: latestDateTime},
 			expected: resource.CheckResponse{
-				resource.Version{PR: latestPullRequestID, Commit: latestCommitID, CommittedDate: latestDateTime},
+				resource.Version{PR: latestPullRequestID, Commit: latestCommitID, ChangedDate: latestDateTime},
 			},
 		},
 
@@ -66,9 +66,9 @@ func TestCheckE2E(t *testing.T) {
 				Repository:  "itsdalmo/test-repository",
 				AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN"),
 			},
-			version: resource.Version{PR: targetPullRequestID, Commit: targetCommitID, CommittedDate: targetDateTime},
+			version: resource.Version{PR: targetPullRequestID, Commit: targetCommitID, ChangedDate: targetDateTime},
 			expected: resource.CheckResponse{
-				resource.Version{PR: latestPullRequestID, Commit: latestCommitID, CommittedDate: latestDateTime},
+				resource.Version{PR: latestPullRequestID, Commit: latestCommitID, ChangedDate: latestDateTime},
 			},
 		},
 
@@ -81,7 +81,7 @@ func TestCheckE2E(t *testing.T) {
 			},
 			version: resource.Version{},
 			expected: resource.CheckResponse{
-				resource.Version{PR: targetPullRequestID, Commit: targetCommitID, CommittedDate: targetDateTime},
+				resource.Version{PR: targetPullRequestID, Commit: targetCommitID, ChangedDate: targetDateTime},
 			},
 		},
 
@@ -94,7 +94,7 @@ func TestCheckE2E(t *testing.T) {
 			},
 			version: resource.Version{},
 			expected: resource.CheckResponse{
-				resource.Version{PR: targetPullRequestID, Commit: targetCommitID, CommittedDate: targetDateTime},
+				resource.Version{PR: targetPullRequestID, Commit: targetCommitID, ChangedDate: targetDateTime},
 			},
 		},
 
@@ -108,7 +108,7 @@ func TestCheckE2E(t *testing.T) {
 			},
 			version: resource.Version{},
 			expected: resource.CheckResponse{
-				resource.Version{PR: latestPullRequestID, Commit: latestCommitID, CommittedDate: latestDateTime},
+				resource.Version{PR: latestPullRequestID, Commit: latestCommitID, ChangedDate: latestDateTime},
 			},
 		},
 
@@ -124,7 +124,7 @@ func TestCheckE2E(t *testing.T) {
 			},
 			version: resource.Version{},
 			expected: resource.CheckResponse{
-				resource.Version{PR: developPullRequestID, Commit: developCommitID, CommittedDate: developDateTime},
+				resource.Version{PR: developPullRequestID, Commit: developCommitID, ChangedDate: developDateTime},
 			},
 		},
 	}
@@ -167,9 +167,9 @@ func TestGetAndPutE2E(t *testing.T) {
 				AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN"),
 			},
 			version: resource.Version{
-				PR:            targetPullRequestID,
-				Commit:        targetCommitID,
-				CommittedDate: time.Time{},
+				PR:          targetPullRequestID,
+				Commit:      targetCommitID,
+				ChangedDate: time.Time{},
 			},
 			getParameters:  resource.GetParameters{},
 			putParameters:  resource.PutParameters{},
@@ -197,9 +197,9 @@ func TestGetAndPutE2E(t *testing.T) {
 				AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN"),
 			},
 			version: resource.Version{
-				PR:            targetPullRequestID,
-				Commit:        targetCommitID,
-				CommittedDate: time.Time{},
+				PR:          targetPullRequestID,
+				Commit:      targetCommitID,
+				ChangedDate: time.Time{},
 			},
 			getParameters: resource.GetParameters{
 				IntegrationTool: "rebase",
@@ -219,9 +219,9 @@ func TestGetAndPutE2E(t *testing.T) {
 				AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN"),
 			},
 			version: resource.Version{
-				PR:            targetPullRequestID,
-				Commit:        targetCommitID,
-				CommittedDate: time.Time{},
+				PR:          targetPullRequestID,
+				Commit:      targetCommitID,
+				ChangedDate: time.Time{},
 			},
 			getParameters: resource.GetParameters{
 				IntegrationTool: "checkout",
@@ -249,9 +249,9 @@ func TestGetAndPutE2E(t *testing.T) {
 				AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN"),
 			},
 			version: resource.Version{
-				PR:            developPullRequestID,
-				Commit:        developCommitID,
-				CommittedDate: time.Time{},
+				PR:          developPullRequestID,
+				Commit:      developCommitID,
+				ChangedDate: time.Time{},
 			},
 			getParameters:       resource.GetParameters{},
 			putParameters:       resource.PutParameters{},
@@ -270,9 +270,9 @@ func TestGetAndPutE2E(t *testing.T) {
 				SkipSSLVerification: true,
 			},
 			version: resource.Version{
-				PR:            targetPullRequestID,
-				Commit:        targetCommitID,
-				CommittedDate: time.Time{},
+				PR:          targetPullRequestID,
+				Commit:      targetCommitID,
+				ChangedDate: time.Time{},
 			},
 			getParameters:       resource.GetParameters{},
 			putParameters:       resource.PutParameters{},
@@ -288,9 +288,9 @@ func TestGetAndPutE2E(t *testing.T) {
 				AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN"),
 			},
 			version: resource.Version{
-				PR:            targetPullRequestID,
-				Commit:        targetCommitID,
-				CommittedDate: time.Time{},
+				PR:          targetPullRequestID,
+				Commit:      targetCommitID,
+				ChangedDate: time.Time{},
 			},
 			getParameters:       resource.GetParameters{GitDepth: 6},
 			putParameters:       resource.PutParameters{},
@@ -316,9 +316,9 @@ func TestGetAndPutE2E(t *testing.T) {
 				AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN"),
 			},
 			version: resource.Version{
-				PR:            targetPullRequestID,
-				Commit:        targetCommitID,
-				CommittedDate: time.Time{},
+				PR:          targetPullRequestID,
+				Commit:      targetCommitID,
+				ChangedDate: time.Time{},
 			},
 			getParameters: resource.GetParameters{
 				ListChangedFiles: true,

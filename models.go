@@ -56,17 +56,22 @@ type MetadataField struct {
 
 // Version communicated with Concourse.
 type Version struct {
-	PR            string    `json:"pr"`
-	Commit        string    `json:"commit"`
-	CommittedDate time.Time `json:"committed,omitempty"`
+	PR          string    `json:"pr"`
+	Commit      string    `json:"commit"`
+	ChangedDate time.Time `json:"changed,omitempty"`
 }
 
 // NewVersion constructs a new Version.
 func NewVersion(p *PullRequest) Version {
+	changed := p.Tip.PushedDate.Time
+	if p.Tip.CommittedDate.Time > changed {
+		changed = p.Tip.CommittedDate.Time
+	}
+
 	return Version{
-		PR:            strconv.Itoa(p.Number),
-		Commit:        p.Tip.OID,
-		CommittedDate: p.Tip.CommittedDate.Time,
+		PR:          strconv.Itoa(p.Number),
+		Commit:      p.Tip.OID,
+		ChangedDate: changed,
 	}
 }
 
@@ -97,6 +102,7 @@ type CommitObject struct {
 	ID            string
 	OID           string
 	CommittedDate githubv4.DateTime
+	PushedDate    githubv4.DateTime
 	Message       string
 	Author        struct {
 		User struct {
