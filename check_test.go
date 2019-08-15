@@ -10,15 +10,15 @@ import (
 
 var (
 	testPullRequests = []*resource.PullRequest{
-		createTestPR(1, "master", true, false, 0),
-		createTestPR(2, "master", false, false, 0),
-		createTestPR(3, "master", false, false, 0),
-		createTestPR(4, "master", false, false, 0),
-		createTestPR(5, "master", false, true, 0),
-		createTestPR(6, "master", false, false, 0),
-		createTestPR(7, "develop", false, false, 0),
-		createTestPR(8, "master", false, false, 1),
-		createTestPR(9, "master", false, false, 0),
+		createTestPR(1, "master", true, false, 0, []string{"bug"}),
+		createTestPR(2, "master", false, false, 0, []string{"duplicate"}),
+		createTestPR(3, "master", false, false, 0, []string{"bug", "good first issue"}),
+		createTestPR(4, "master", false, false, 0, nil),
+		createTestPR(5, "master", false, true, 0, []string{"invalid"}),
+		createTestPR(6, "master", false, false, 0, nil),
+		createTestPR(7, "develop", false, false, 0, []string{"help wanted"}),
+		createTestPR(8, "master", false, false, 1, nil),
+		createTestPR(9, "master", false, false, 0, nil),
 	}
 )
 
@@ -111,6 +111,7 @@ func TestCheck(t *testing.T) {
 				resource.NewVersion(testPullRequests[2]),
 			},
 		},
+
 		{
 			description: "check correctly ignores [skip ci] when specified",
 			source: resource.Source{
@@ -124,6 +125,7 @@ func TestCheck(t *testing.T) {
 				resource.NewVersion(testPullRequests[0]),
 			},
 		},
+
 		{
 			description: "check correctly ignores cross repo pull requests",
 			source: resource.Source{
@@ -139,6 +141,7 @@ func TestCheck(t *testing.T) {
 				resource.NewVersion(testPullRequests[1]),
 			},
 		},
+
 		{
 			description: "check supports specifying base branch",
 			source: resource.Source{
@@ -153,6 +156,7 @@ func TestCheck(t *testing.T) {
 				resource.NewVersion(testPullRequests[6]),
 			},
 		},
+
 		{
 			description: "check correctly ignores PRs with no approved reviews when specified",
 			source: resource.Source{
@@ -164,6 +168,21 @@ func TestCheck(t *testing.T) {
 			pullRequests: testPullRequests,
 			expected: resource.CheckResponse{
 				resource.NewVersion(testPullRequests[7]),
+			},
+		},
+
+		{
+			description: "check returns latest version from a PR with at least one of the desired labels on it",
+			source: resource.Source{
+				Repository:  "itsdalmo/test-repository",
+				AccessToken: "oauthtoken",
+				Labels:      []string{"help wanted", "enhancement"},
+			},
+			version:      resource.Version{},
+			pullRequests: testPullRequests,
+			files:        [][]string{},
+			expected: resource.CheckResponse{
+				resource.NewVersion(testPullRequests[6]),
 			},
 		},
 	}
