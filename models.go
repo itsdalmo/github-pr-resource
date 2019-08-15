@@ -77,6 +77,7 @@ type PullRequest struct {
 	PullRequestObject
 	Tip                 CommitObject
 	ApprovedReviewCount int
+	Labels              []LabelObject
 }
 
 // PullRequestObject represents the GraphQL commit node.
@@ -112,4 +113,10 @@ type CommitObject struct {
 // https://developer.github.com/v4/object/pullrequestchangedfile/
 type ChangedFileObject struct {
 	Path string
+}
+
+// LabelObject represents the GraphQL label node.
+// https://developer.github.com/v4/object/label
+type LabelObject struct {
+	Name string
 }
