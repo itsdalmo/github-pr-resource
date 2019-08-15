@@ -22,6 +22,7 @@ type Source struct {
 	GitCryptKey             string   `json:"git_crypt_key"`
 	BaseBranch              string   `json:"base_branch"`
 	RequiredReviewApprovals int      `json:"required_review_approvals"`
+	Labels                  []string `json:"labels"`
 }
 
 // Validate the source configuration.
