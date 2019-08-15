@@ -114,6 +114,13 @@ func (m *GithubClient) ListOpenPullRequests() ([]*PullRequest, error) {
 								}
 							}
 						} `graphql:"commits(last:$commitsLast)"`
+						Labels struct {
+							Edges []struct {
+								Node struct {
+									LabelObject
+								}
+							}
+						} `graphql:"labels(first:$labelsFirst)"`
 					}
 				}
 				PageInfo struct {
@@ -132,6 +139,7 @@ func (m *GithubClient) ListOpenPullRequests() ([]*PullRequest, error) {
 		"prCursor":        (*githubv4.String)(nil),
 		"commitsLast":     githubv4.Int(1),
 		"prReviewStates":  []githubv4.PullRequestReviewState{githubv4.PullRequestReviewStateApproved},
+		"labelsFirst":     githubv4.Int(100),
 	}
 
 	var response []*PullRequest
@@ -140,11 +148,17 @@ func (m *GithubClient) ListOpenPullRequests() ([]*PullRequest, error) {
 			return nil, err
 		}
 		for _, p := range query.Repository.PullRequests.Edges {
+			labels := make([]LabelObject, len(p.Node.Labels.Edges))
+			for _, l := range p.Node.Labels.Edges {
+				labels = append(labels, l.Node.LabelObject)
+			}
+
 			for _, c := range p.Node.Commits.Edges {
 				response = append(response, &PullRequest{
 					PullRequestObject:   p.Node.PullRequestObject,
 					Tip:                 c.Node.Commit,
 					ApprovedReviewCount: p.Node.Reviews.TotalCount,
+					Labels:              labels,
 				})
 			}
 		}
