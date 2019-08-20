@@ -8,6 +8,20 @@ import (
 )
 
 type FakeGithub struct {
+	GetChangedFilesStub        func(string, string) ([]resource.ChangedFileObject, error)
+	getChangedFilesMutex       sync.RWMutex
+	getChangedFilesArgsForCall []struct {
+		arg1 string
+		arg2 string
+	}
+	getChangedFilesReturns struct {
+		result1 []resource.ChangedFileObject
+		result2 error
+	}
+	getChangedFilesReturnsOnCall map[int]struct {
+		result1 []resource.ChangedFileObject
+		result2 error
+	}
 	GetPullRequestStub        func(string, string) (*resource.PullRequest, error)
 	getPullRequestMutex       sync.RWMutex
 	getPullRequestArgsForCall []struct {
@@ -77,6 +91,70 @@ type FakeGithub struct {
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
+}
+
+func (fake *FakeGithub) GetChangedFiles(arg1 string, arg2 string) ([]resource.ChangedFileObject, error) {
+	fake.getChangedFilesMutex.Lock()
+	ret, specificReturn := fake.getChangedFilesReturnsOnCall[len(fake.getChangedFilesArgsForCall)]
+	fake.getChangedFilesArgsForCall = append(fake.getChangedFilesArgsForCall, struct {
+		arg1 string
+		arg2 string
+	}{arg1, arg2})
+	fake.recordInvocation("GetChangedFiles", []interface{}{arg1, arg2})
+	fake.getChangedFilesMutex.Unlock()
+	if fake.GetChangedFilesStub != nil {
+		return fake.GetChangedFilesStub(arg1, arg2)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	fakeReturns := fake.getChangedFilesReturns
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeGithub) GetChangedFilesCallCount() int {
+	fake.getChangedFilesMutex.RLock()
+	defer fake.getChangedFilesMutex.RUnlock()
+	return len(fake.getChangedFilesArgsForCall)
+}
+
+func (fake *FakeGithub) GetChangedFilesCalls(stub func(string, string) ([]resource.ChangedFileObject, error)) {
+	fake.getChangedFilesMutex.Lock()
+	defer fake.getChangedFilesMutex.Unlock()
+	fake.GetChangedFilesStub = stub
+}
+
+func (fake *FakeGithub) GetChangedFilesArgsForCall(i int) (string, string) {
+	fake.getChangedFilesMutex.RLock()
+	defer fake.getChangedFilesMutex.RUnlock()
+	argsForCall := fake.getChangedFilesArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
+}
+
+func (fake *FakeGithub) GetChangedFilesReturns(result1 []resource.ChangedFileObject, result2 error) {
+	fake.getChangedFilesMutex.Lock()
+	defer fake.getChangedFilesMutex.Unlock()
+	fake.GetChangedFilesStub = nil
+	fake.getChangedFilesReturns = struct {
+		result1 []resource.ChangedFileObject
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeGithub) GetChangedFilesReturnsOnCall(i int, result1 []resource.ChangedFileObject, result2 error) {
+	fake.getChangedFilesMutex.Lock()
+	defer fake.getChangedFilesMutex.Unlock()
+	fake.GetChangedFilesStub = nil
+	if fake.getChangedFilesReturnsOnCall == nil {
+		fake.getChangedFilesReturnsOnCall = make(map[int]struct {
+			result1 []resource.ChangedFileObject
+			result2 error
+		})
+	}
+	fake.getChangedFilesReturnsOnCall[i] = struct {
+		result1 []resource.ChangedFileObject
+		result2 error
+	}{result1, result2}
 }
 
 func (fake *FakeGithub) GetPullRequest(arg1 string, arg2 string) (*resource.PullRequest, error) {
@@ -390,6 +468,8 @@ func (fake *FakeGithub) UpdateCommitStatusReturnsOnCall(i int, result1 error) {
 func (fake *FakeGithub) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
+	fake.getChangedFilesMutex.RLock()
+	defer fake.getChangedFilesMutex.RUnlock()
 	fake.getPullRequestMutex.RLock()
 	defer fake.getPullRequestMutex.RUnlock()
 	fake.listModifiedFilesMutex.RLock()

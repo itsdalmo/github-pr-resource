@@ -10,17 +10,19 @@ import (
 
 // Source represents the configuration for the resource.
 type Source struct {
-	Repository          string   `json:"repository"`
-	AccessToken         string   `json:"access_token"`
-	V3Endpoint          string   `json:"v3_endpoint"`
-	V4Endpoint          string   `json:"v4_endpoint"`
-	Paths               []string `json:"paths"`
-	IgnorePaths         []string `json:"ignore_paths"`
-	DisableCISkip       bool     `json:"disable_ci_skip"`
-	SkipSSLVerification bool     `json:"skip_ssl_verification"`
-	DisableForks        bool     `json:"disable_forks"`
-	GitCryptKey         string   `json:"git_crypt_key"`
-	BaseBranch          string   `json:"base_branch"`
+	Repository              string   `json:"repository"`
+	AccessToken             string   `json:"access_token"`
+	V3Endpoint              string   `json:"v3_endpoint"`
+	V4Endpoint              string   `json:"v4_endpoint"`
+	Paths                   []string `json:"paths"`
+	IgnorePaths             []string `json:"ignore_paths"`
+	DisableCISkip           bool     `json:"disable_ci_skip"`
+	SkipSSLVerification     bool     `json:"skip_ssl_verification"`
+	DisableForks            bool     `json:"disable_forks"`
+	GitCryptKey             string   `json:"git_crypt_key"`
+	BaseBranch              string   `json:"base_branch"`
+	RequiredReviewApprovals int      `json:"required_review_approvals"`
+	Labels                  []string `json:"labels"`
 }
 
 // Validate the source configuration.
@@ -73,7 +75,9 @@ func NewVersion(p *PullRequest) Version {
 // PullRequest represents a pull request and includes the tip (commit).
 type PullRequest struct {
 	PullRequestObject
-	Tip CommitObject
+	Tip                 CommitObject
+	ApprovedReviewCount int
+	Labels              []LabelObject
 }
 
 // PullRequestObject represents the GraphQL commit node.
@@ -103,4 +107,16 @@ type CommitObject struct {
 			Login string
 		}
 	}
+}
+
+// ChangedFileObject represents the GraphQL FilesChanged node.
+// https://developer.github.com/v4/object/pullrequestchangedfile/
+type ChangedFileObject struct {
+	Path string
+}
+
+// LabelObject represents the GraphQL label node.
+// https://developer.github.com/v4/object/label
+type LabelObject struct {
+	Name string
 }

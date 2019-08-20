@@ -127,6 +127,47 @@ func TestCheckE2E(t *testing.T) {
 				resource.Version{PR: developPullRequestID, Commit: developCommitID, CommittedDate: developDateTime},
 			},
 		},
+
+		{
+			description: "check works with required review approvals",
+			source: resource.Source{
+				Repository:              "itsdalmo/test-repository",
+				AccessToken:             os.Getenv("GITHUB_ACCESS_TOKEN"),
+				V3Endpoint:              "https://api.github.com/",
+				V4Endpoint:              "https://api.github.com/graphql",
+				RequiredReviewApprovals: 1,
+			},
+			version: resource.Version{},
+			expected: resource.CheckResponse{
+				resource.Version{PR: targetPullRequestID, Commit: targetCommitID, CommittedDate: targetDateTime},
+			},
+		},
+
+		{
+			description: "check works when we require multiple review approvals",
+			source: resource.Source{
+				Repository:              "itsdalmo/test-repository",
+				AccessToken:             os.Getenv("GITHUB_ACCESS_TOKEN"),
+				V3Endpoint:              "https://api.github.com/",
+				V4Endpoint:              "https://api.github.com/graphql",
+				RequiredReviewApprovals: 2,
+			},
+			version:  resource.Version{},
+			expected: resource.CheckResponse(nil),
+		},
+
+		{
+			description: "check returns latest version from a PR with desired labels on it",
+			source: resource.Source{
+				Repository:  "itsdalmo/test-repository",
+				AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN"),
+				Labels:      []string{"enhancement"},
+			},
+			version: resource.Version{},
+			expected: resource.CheckResponse{
+				resource.Version{PR: targetPullRequestID, Commit: targetCommitID, CommittedDate: targetDateTime},
+			},
+		},
 	}
 
 	for _, tc := range tests {
@@ -153,6 +194,8 @@ func TestGetAndPutE2E(t *testing.T) {
 		putParameters       resource.PutParameters
 		versionString       string
 		metadataString      string
+		filesString         string
+		metadataFiles       map[string]string
 		expectedCommitCount int
 		expectedCommits     []string
 	}{
@@ -169,10 +212,20 @@ func TestGetAndPutE2E(t *testing.T) {
 				Commit:        targetCommitID,
 				CommittedDate: time.Time{},
 			},
-			getParameters:       resource.GetParameters{},
-			putParameters:       resource.PutParameters{},
-			versionString:       `{"pr":"4","commit":"a5114f6ab89f4b736655642a11e8d15ce363d882","committed":"0001-01-01T00:00:00Z"}`,
-			metadataString:      `[{"name":"pr","value":"4"},{"name":"url","value":"https://github.com/itsdalmo/test-repository/pull/4"},{"name":"head_name","value":"my_second_pull"},{"name":"head_sha","value":"a5114f6ab89f4b736655642a11e8d15ce363d882"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"93eeeedb8a16e6662062d1eca5655108977cc59a"},{"name":"message","value":"Push 2."},{"name":"author","value":"itsdalmo"}]`,
+			getParameters:  resource.GetParameters{},
+			putParameters:  resource.PutParameters{},
+			versionString:  `{"pr":"4","commit":"a5114f6ab89f4b736655642a11e8d15ce363d882","committed":"0001-01-01T00:00:00Z"}`,
+			metadataString: `[{"name":"pr","value":"4"},{"name":"url","value":"https://github.com/itsdalmo/test-repository/pull/4"},{"name":"head_name","value":"my_second_pull"},{"name":"head_sha","value":"a5114f6ab89f4b736655642a11e8d15ce363d882"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"93eeeedb8a16e6662062d1eca5655108977cc59a"},{"name":"message","value":"Push 2."},{"name":"author","value":"itsdalmo"}]`,
+			metadataFiles: map[string]string{
+				"pr":        "4",
+				"url":       "https://github.com/itsdalmo/test-repository/pull/4",
+				"head_name": "my_second_pull",
+				"head_sha":  "a5114f6ab89f4b736655642a11e8d15ce363d882",
+				"base_name": "master",
+				"base_sha":  "93eeeedb8a16e6662062d1eca5655108977cc59a",
+				"message":   "Push 2.",
+				"author":    "itsdalmo",
+			},
 			expectedCommitCount: 10,
 			expectedCommits:     []string{"Merge commit 'a5114f6ab89f4b736655642a11e8d15ce363d882'"},
 		},
@@ -297,6 +350,27 @@ func TestGetAndPutE2E(t *testing.T) {
 				"Add comment after creating first pull request.",
 			},
 		},
+		{
+			description: "get works with list_changed_files",
+			source: resource.Source{
+				Repository:  "itsdalmo/test-repository",
+				AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN"),
+			},
+			version: resource.Version{
+				PR:            targetPullRequestID,
+				Commit:        targetCommitID,
+				CommittedDate: time.Time{},
+			},
+			getParameters: resource.GetParameters{
+				ListChangedFiles: true,
+			},
+			putParameters:       resource.PutParameters{},
+			versionString:       `{"pr":"4","commit":"a5114f6ab89f4b736655642a11e8d15ce363d882","committed":"0001-01-01T00:00:00Z"}`,
+			metadataString:      `[{"name":"pr","value":"4"},{"name":"url","value":"https://github.com/itsdalmo/test-repository/pull/4"},{"name":"head_name","value":"my_second_pull"},{"name":"head_sha","value":"a5114f6ab89f4b736655642a11e8d15ce363d882"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"93eeeedb8a16e6662062d1eca5655108977cc59a"},{"name":"message","value":"Push 2."},{"name":"author","value":"itsdalmo"}]`,
+			filesString:         "README.md\ntest.txt\n",
+			expectedCommitCount: 10,
+			expectedCommits:     []string{"Merge commit 'a5114f6ab89f4b736655642a11e8d15ce363d882'"},
+		},
 	}
 
 	for _, tc := range tests {
@@ -324,6 +398,16 @@ func TestGetAndPutE2E(t *testing.T) {
 
 			metadata := readTestFile(t, filepath.Join(dir, ".git", "resource", "metadata.json"))
 			assert.Equal(t, tc.metadataString, metadata)
+
+			if tc.getParameters.ListChangedFiles {
+				changedFiles := readTestFile(t, filepath.Join(dir, ".git", "resource", "changed_files"))
+				assert.Equal(t, tc.filesString, changedFiles)
+			}
+
+			for filename, expected := range tc.metadataFiles {
+				actual := readTestFile(t, filepath.Join(dir, ".git", "resource", filename))
+				assert.Equal(t, expected, actual)
+			}
 
 			// Check commit history
 			history := gitHistory(t, dir)

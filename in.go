@@ -93,6 +93,33 @@ func Get(request GetRequest, github Github, git Git, outputDir string) (*GetResp
 		return nil, fmt.Errorf("failed to write metadata: %s", err)
 	}
 
+	for _, d := range metadata {
+		filename := d.Name
+		content := []byte(d.Value)
+		if err := ioutil.WriteFile(filepath.Join(path, filename), content, 0644); err != nil {
+			return nil, fmt.Errorf("failed to write metadata file %s: %s", filename, err)
+		}
+
+	}
+
+	if request.Params.ListChangedFiles {
+		cfol, err := github.GetChangedFiles(request.Version.PR, request.Version.Commit)
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch list of changed files: %s", err)
+		}
+
+		var fl []byte
+
+		for _, v := range cfol {
+			fl = append(fl, []byte(v.Path+"\n")...)
+		}
+
+		// Create List with changed files
+		if err := ioutil.WriteFile(filepath.Join(path, "changed_files"), fl, 0644); err != nil {
+			return nil, fmt.Errorf("failed to write file list: %s", err)
+		}
+	}
+
 	return &GetResponse{
 		Version:  request.Version,
 		Metadata: metadata,
@@ -101,9 +128,10 @@ func Get(request GetRequest, github Github, git Git, outputDir string) (*GetResp
 
 // GetParameters ...
 type GetParameters struct {
-	SkipDownload    bool   `json:"skip_download"`
-	IntegrationTool string `json:"integration_tool"`
-	GitDepth        int    `json:"git_depth"`
+	SkipDownload     bool   `json:"skip_download"`
+	IntegrationTool  string `json:"integration_tool"`
+	GitDepth         int    `json:"git_depth"`
+	ListChangedFiles bool   `json:"list_changed_files"`
 }
 
 // GetRequest ...

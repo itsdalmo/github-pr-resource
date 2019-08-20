@@ -38,7 +38,32 @@ Loop:
 			continue
 		}
 
+		// Filter out pull request if it does not contain at least one of the desired labels
+		if len(request.Source.Labels) > 0 {
+			labelFound := false
+
+		LabelLoop:
+			for _, wantedLabel := range request.Source.Labels {
+				for _, targetLabel := range p.Labels {
+					if targetLabel.Name == wantedLabel {
+						labelFound = true
+						break LabelLoop
+					}
+				}
+			}
+
+			if !labelFound {
+				continue Loop
+			}
+		}
+
+		// Filter out forks.
 		if request.Source.DisableForks && p.IsCrossRepository {
+			continue
+		}
+
+		// Filter pull request if it does not have the required number of approved review(s).
+		if p.ApprovedReviewCount < request.Source.RequiredReviewApprovals {
 			continue
 		}
 
