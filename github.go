@@ -9,13 +9,22 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 
 	"github.com/google/go-github/github"
+	"github.com/gregjones/httpcache"
+	"github.com/gregjones/httpcache/diskcache"
 	"github.com/shurcooL/githubv4"
 	"golang.org/x/oauth2"
 )
+
+// on-disk location to store cached API results in between invocations, in OS-specific temp folder.
+// primarily useful for the Check command, which will be re-run in the same container multiple times
+// the underlying disk caching library (diskv via httpcache) automatically finds-or-creates this directory.
+// failures to write cache are silently ignored.
+const diskCacheFolder = "github-api-cache"
 
 // Github for testing purposes.
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -o fakes/fake_github.go . Github
@@ -43,18 +52,20 @@ func NewGithubClient(s *Source) (*GithubClient, error) {
 		return nil, err
 	}
 
+	diskCachePath := filepath.Join(os.TempDir(), diskCacheFolder)
+	cache := diskcache.New(diskCachePath)
+	cachingTransport := httpcache.NewTransport(cache)
+
 	// Skip SSL verification for self-signed certificates
 	// source: https://github.com/google/go-github/pull/598#issuecomment-333039238
-	var ctx context.Context
 	if s.SkipSSLVerification {
-		insecureClient := &http.Client{Transport: &http.Transport{
+		cachingTransport.Transport = &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		},
 		}
-		ctx = context.WithValue(context.TODO(), oauth2.HTTPClient, insecureClient)
-	} else {
-		ctx = context.TODO()
 	}
+
+	var ctx context.Context
+	ctx = context.WithValue(context.TODO(), oauth2.HTTPClient, cachingTransport.Client())
 
 	client := oauth2.NewClient(ctx, oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: s.AccessToken},
