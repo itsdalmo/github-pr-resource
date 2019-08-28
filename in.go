@@ -74,6 +74,7 @@ func Get(request GetRequest, github Github, git Git, outputDir string) (*GetResp
 	metadata.Add("author", pull.Tip.Author.User.Login)
 	metadata.Add("repository_url", pull.Repository.URL)
 	metadata.Add("is_cross_repository", strconv.FormatBool(pull.IsCrossRepository))
+	metadata.Add("head_repository_url", pull.HeadRepository.URL)
 
 	// Write version and metadata for reuse in PUT
 	path := filepath.Join(outputDir, ".git", "resource")

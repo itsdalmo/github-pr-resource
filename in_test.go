@@ -42,7 +42,7 @@ func TestGet(t *testing.T) {
 			parameters:     resource.GetParameters{},
 			pullRequest:    createTestPR(1, "master", false, false, 0, nil),
 			versionString:  `{"pr":"pr1","commit":"commit1","committed":"0001-01-01T00:00:00Z"}`,
-			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"}]`,
+			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"},{"name":"repository_url","value":"repo1 url"},{"name":"is_cross_repository","value":"false"},{"name":"head_repository_url","value":""}]`,
 		},
 		{
 			description: "get supports unlocking with git crypt",
@@ -59,7 +59,7 @@ func TestGet(t *testing.T) {
 			parameters:     resource.GetParameters{},
 			pullRequest:    createTestPR(1, "master", false, false, 0, nil),
 			versionString:  `{"pr":"pr1","commit":"commit1","committed":"0001-01-01T00:00:00Z"}`,
-			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"}]`,
+			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"},{"name":"repository_url","value":"repo1 url"},{"name":"is_cross_repository","value":"false"},{"name":"head_repository_url","value":""}]`,
 		},
 		{
 			description: "get supports rebasing",
@@ -77,7 +77,7 @@ func TestGet(t *testing.T) {
 			},
 			pullRequest:    createTestPR(1, "master", false, false, 0, nil),
 			versionString:  `{"pr":"pr1","commit":"commit1","committed":"0001-01-01T00:00:00Z"}`,
-			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"}]`,
+			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"},{"name":"repository_url","value":"repo1 url"},{"name":"is_cross_repository","value":"false"},{"name":"head_repository_url","value":""}]`,
 		},
 		{
 			description: "get supports checkout",
@@ -95,7 +95,7 @@ func TestGet(t *testing.T) {
 			},
 			pullRequest:    createTestPR(1, "master", false, false, 0, nil),
 			versionString:  `{"pr":"pr1","commit":"commit1","committed":"0001-01-01T00:00:00Z"}`,
-			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"}]`,
+			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"},{"name":"repository_url","value":"repo1 url"},{"name":"is_cross_repository","value":"false"},{"name":"head_repository_url","value":""}]`,
 		},
 		{
 			description: "get supports git_depth",
@@ -113,7 +113,7 @@ func TestGet(t *testing.T) {
 			},
 			pullRequest:    createTestPR(1, "master", false, false, 0, nil),
 			versionString:  `{"pr":"pr1","commit":"commit1","committed":"0001-01-01T00:00:00Z"}`,
-			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"}]`,
+			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"},{"name":"repository_url","value":"repo1 url"},{"name":"is_cross_repository","value":"false"},{"name":"head_repository_url","value":""}]`,
 		},
 		{
 			description: "get supports list_changed_files",
@@ -139,7 +139,7 @@ func TestGet(t *testing.T) {
 				},
 			},
 			versionString:  `{"pr":"pr1","commit":"commit1","committed":"0001-01-01T00:00:00Z"}`,
-			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"}]`,
+			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"},{"name":"repository_url","value":"repo1 url"},{"name":"is_cross_repository","value":"false"},{"name":"head_repository_url","value":""}]`,
 			filesString:    "README.md\nOther.md\n",
 		},
 	}

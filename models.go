@@ -92,6 +92,9 @@ type PullRequestObject struct {
 	Repository  struct {
 		URL string
 	}
+	HeadRepository struct {
+		URL string
+	}
 	IsCrossRepository bool
 }
 
