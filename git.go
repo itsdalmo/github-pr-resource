@@ -78,8 +78,10 @@ func (g *GitClient) Pull(uri, branch string, depth int) error {
 	}
 
 	args := []string{"pull", endpoint + ".git", branch}
+	depthArgs := []string{}
 	if depth > 0 {
-		args = append(args, "--depth", strconv.Itoa(depth))
+		depthArgs = []string{"--depth", strconv.Itoa(depth)}
+		args = append(args, depthArgs...)
 	}
 	cmd := g.command("git", args...)
 
@@ -91,7 +93,13 @@ func (g *GitClient) Pull(uri, branch string, depth int) error {
 		return fmt.Errorf("clone failed: %s", err)
 	}
 
-	if err := g.command("git", "remote", "add", "origin", endpoint).Run(); err != nil {
+	if err := g.command("git", "remote", "add", "origin", endpoint+".git").Run(); err != nil {
+		return fmt.Errorf("failed to set remote origin: %s", err)
+	}
+
+	args = []string{"fetch", "origin", "master"}
+	args = append(args, depthArgs...)
+	if err := g.command("git", args...).Run(); err != nil {
 		return fmt.Errorf("failed to set remote origin: %s", err)
 	}
 
