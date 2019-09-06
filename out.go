@@ -38,9 +38,27 @@ func Put(request PutRequest, manager Github, inputDir string) (*PutResponse, err
 
 	// Set status if specified
 	if p := request.Params; p.Status != "" {
-		if err := manager.UpdateCommitStatus(version.Commit, p.BaseContext, p.Context, p.Status, os.ExpandEnv(p.TargetURL), p.Description); err != nil {
-			return nil, fmt.Errorf("failed to set status: %s", err)
-		}
+
+		// Set description from a file
+        if p.DescriptionFile != "" {
+            content, err := ioutil.ReadFile(filepath.Join(inputDir, p.DescriptionFile))
+            if err != nil {
+                return nil, fmt.Errorf("failed to read description file: %s", err)
+            }
+            description := string(content)
+
+            if err := manager.UpdateCommitStatus(version.Commit, p.BaseContext, p.Context, p.Status, os.ExpandEnv(p.TargetURL), description); err != nil {
+                return nil, fmt.Errorf("failed to set status: %s", err)
+            }
+        // Set description
+        } else {
+            description := string(p.Description)
+
+            if err := manager.UpdateCommitStatus(version.Commit, p.BaseContext, p.Context, p.Status, os.ExpandEnv(p.TargetURL), description); err != nil {
+                return nil, fmt.Errorf("failed to set status: %s", err)
+            }
+        }
+
 	}
 
 	// Set comment if specified
@@ -86,14 +104,15 @@ type PutResponse struct {
 
 // PutParameters for the resource.
 type PutParameters struct {
-	Path        string `json:"path"`
-	BaseContext string `json:"base_context"`
-	Context     string `json:"context"`
-	TargetURL   string `json:"target_url"`
-	Description string `json:"description"`
-	Status      string `json:"status"`
-	CommentFile string `json:"comment_file"`
-	Comment     string `json:"comment"`
+	Path            string `json:"path"`
+	BaseContext     string `json:"base_context"`
+	Context         string `json:"context"`
+	TargetURL       string `json:"target_url"`
+	DescriptionFile string `json:"description_file"`
+	Description     string `json:"description"`
+	Status          string `json:"status"`
+	CommentFile     string `json:"comment_file"`
+	Comment         string `json:"comment"`
 }
 
 // Validate the put parameters.
