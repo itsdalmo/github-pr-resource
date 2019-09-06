@@ -38,6 +38,7 @@ func Put(request PutRequest, manager Github, inputDir string) (*PutResponse, err
 
 	// Set status if specified
 	if p := request.Params; p.Status != "" {
+	    description := p.Description
 
 		// Set description from a file
         if p.DescriptionFile != "" {
@@ -45,18 +46,11 @@ func Put(request PutRequest, manager Github, inputDir string) (*PutResponse, err
             if err != nil {
                 return nil, fmt.Errorf("failed to read description file: %s", err)
             }
-            description := string(content)
+            description = string(content)
+        }
 
-            if err := manager.UpdateCommitStatus(version.Commit, p.BaseContext, p.Context, p.Status, os.ExpandEnv(p.TargetURL), description); err != nil {
-                return nil, fmt.Errorf("failed to set status: %s", err)
-            }
-        // Set description
-        } else {
-            description := string(p.Description)
-
-            if err := manager.UpdateCommitStatus(version.Commit, p.BaseContext, p.Context, p.Status, os.ExpandEnv(p.TargetURL), description); err != nil {
-                return nil, fmt.Errorf("failed to set status: %s", err)
-            }
+        if err := manager.UpdateCommitStatus(version.Commit, p.BaseContext, p.Context, p.Status, os.ExpandEnv(p.TargetURL), description); err != nil {
+            return nil, fmt.Errorf("failed to set status: %s", err)
         }
 
 	}
