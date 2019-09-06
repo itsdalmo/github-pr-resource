@@ -52,7 +52,6 @@ func Put(request PutRequest, manager Github, inputDir string) (*PutResponse, err
 		if err := manager.UpdateCommitStatus(version.Commit, p.BaseContext, p.Context, p.Status, os.ExpandEnv(p.TargetURL), description); err != nil {
 			return nil, fmt.Errorf("failed to set status: %s", err)
 		}
-
 	}
 
 	// Set comment if specified
