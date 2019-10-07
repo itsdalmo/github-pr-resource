@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	resource "github.com/telia-oss/github-pr-resource"
 	"github.com/telia-oss/github-pr-resource/fakes"
+	"github.com/telia-oss/github-pr-resource/pullrequest"
 )
 
 func TestPut(t *testing.T) {
@@ -19,7 +20,7 @@ func TestPut(t *testing.T) {
 		source      resource.Source
 		version     resource.Version
 		parameters  resource.PutParameters
-		pullRequest *resource.PullRequest
+		pullRequest pullrequest.PullRequest
 	}{
 		{
 			description: "put with no parameters does nothing",
@@ -28,12 +29,12 @@ func TestPut(t *testing.T) {
 				AccessToken: "oauthtoken",
 			},
 			version: resource.Version{
-				PR:            "pr1",
-				Commit:        "commit1",
-				CommittedDate: time.Time{},
+				PR:          1,
+				Commit:      "commit1",
+				UpdatedDate: time.Time{},
 			},
 			parameters:  resource.PutParameters{},
-			pullRequest: createTestPR(1, "master", false, false, 0, nil),
+			pullRequest: createTestPR(1, "master", false, false, false, false, 0, nil),
 		},
 
 		{
@@ -43,14 +44,14 @@ func TestPut(t *testing.T) {
 				AccessToken: "oauthtoken",
 			},
 			version: resource.Version{
-				PR:            "pr1",
-				Commit:        "commit1",
-				CommittedDate: time.Time{},
+				PR:          1,
+				Commit:      "commit1",
+				UpdatedDate: time.Time{},
 			},
 			parameters: resource.PutParameters{
 				Status: "success",
 			},
-			pullRequest: createTestPR(1, "master", false, false, 0, nil),
+			pullRequest: createTestPR(1, "master", false, false, false, false, 0, nil),
 		},
 
 		{
@@ -60,15 +61,15 @@ func TestPut(t *testing.T) {
 				AccessToken: "oauthtoken",
 			},
 			version: resource.Version{
-				PR:            "pr1",
-				Commit:        "commit1",
-				CommittedDate: time.Time{},
+				PR:          1,
+				Commit:      "commit1",
+				UpdatedDate: time.Time{},
 			},
 			parameters: resource.PutParameters{
 				Status:  "failure",
 				Context: "build",
 			},
-			pullRequest: createTestPR(1, "master", false, false, 0, nil),
+			pullRequest: createTestPR(1, "master", false, false, false, false, 0, nil),
 		},
 
 		{
@@ -78,16 +79,16 @@ func TestPut(t *testing.T) {
 				AccessToken: "oauthtoken",
 			},
 			version: resource.Version{
-				PR:            "pr1",
-				Commit:        "commit1",
-				CommittedDate: time.Time{},
+				PR:          1,
+				Commit:      "commit1",
+				UpdatedDate: time.Time{},
 			},
 			parameters: resource.PutParameters{
 				Status:      "failure",
 				BaseContext: "concourse-ci-custom",
 				Context:     "build",
 			},
-			pullRequest: createTestPR(1, "master", false, false, 0, nil),
+			pullRequest: createTestPR(1, "master", false, false, false, false, 0, nil),
 		},
 
 		{
@@ -97,15 +98,15 @@ func TestPut(t *testing.T) {
 				AccessToken: "oauthtoken",
 			},
 			version: resource.Version{
-				PR:            "pr1",
-				Commit:        "commit1",
-				CommittedDate: time.Time{},
+				PR:          1,
+				Commit:      "commit1",
+				UpdatedDate: time.Time{},
 			},
 			parameters: resource.PutParameters{
 				Status:    "failure",
 				TargetURL: "https://targeturl.com/concourse",
 			},
-			pullRequest: createTestPR(1, "master", false, false, 0, nil),
+			pullRequest: createTestPR(1, "master", false, false, false, false, 0, nil),
 		},
 
 		{
@@ -115,15 +116,15 @@ func TestPut(t *testing.T) {
 				AccessToken: "oauthtoken",
 			},
 			version: resource.Version{
-				PR:            "pr1",
-				Commit:        "commit1",
-				CommittedDate: time.Time{},
+				PR:          1,
+				Commit:      "commit1",
+				UpdatedDate: time.Time{},
 			},
 			parameters: resource.PutParameters{
 				Status:      "failure",
 				Description: "Concourse CI build",
 			},
-			pullRequest: createTestPR(1, "master", false, false, 0, nil),
+			pullRequest: createTestPR(1, "master", false, false, false, false, 0, nil),
 		},
 
 		{
@@ -133,14 +134,14 @@ func TestPut(t *testing.T) {
 				AccessToken: "oauthtoken",
 			},
 			version: resource.Version{
-				PR:            "pr1",
-				Commit:        "commit1",
-				CommittedDate: time.Time{},
+				PR:          1,
+				Commit:      "commit1",
+				UpdatedDate: time.Time{},
 			},
 			parameters: resource.PutParameters{
 				Comment: "comment",
 			},
-			pullRequest: createTestPR(1, "master", false, false, 0, nil),
+			pullRequest: createTestPR(1, "master", false, false, false, false, 0, nil),
 		},
 	}
 
@@ -207,7 +208,7 @@ func TestVariableSubstitution(t *testing.T) {
 		parameters        resource.PutParameters
 		expectedComment   string
 		expectedTargetURL string
-		pullRequest       *resource.PullRequest
+		pullRequest       pullrequest.PullRequest
 	}{
 
 		{
@@ -217,15 +218,15 @@ func TestVariableSubstitution(t *testing.T) {
 				AccessToken: "oauthtoken",
 			},
 			version: resource.Version{
-				PR:            "pr1",
-				Commit:        "commit1",
-				CommittedDate: time.Time{},
+				PR:          1,
+				Commit:      "commit1",
+				UpdatedDate: time.Time{},
 			},
 			parameters: resource.PutParameters{
 				Comment: fmt.Sprintf("$%s", variableName),
 			},
 			expectedComment: variableValue,
-			pullRequest:     createTestPR(1, "master", false, false, 0, nil),
+			pullRequest:     createTestPR(1, "master", false, false, false, false, 0, nil),
 		},
 
 		{
@@ -235,16 +236,16 @@ func TestVariableSubstitution(t *testing.T) {
 				AccessToken: "oauthtoken",
 			},
 			version: resource.Version{
-				PR:            "pr1",
-				Commit:        "commit1",
-				CommittedDate: time.Time{},
+				PR:          1,
+				Commit:      "commit1",
+				UpdatedDate: time.Time{},
 			},
 			parameters: resource.PutParameters{
 				Status:    "failure",
 				TargetURL: fmt.Sprintf("%s$%s", variableURL, variableName),
 			},
 			expectedTargetURL: fmt.Sprintf("%s%s", variableURL, variableValue),
-			pullRequest:       createTestPR(1, "master", false, false, 0, nil),
+			pullRequest:       createTestPR(1, "master", false, false, false, false, 0, nil),
 		},
 	}
 

@@ -28,6 +28,10 @@ var (
 	developDateTime      = time.Date(2018, time.September, 25, 21, 00, 16, 0, time.UTC)
 )
 
+const (
+	repo = "itsdalmo/test-repository"
+)
+
 func TestCheckE2E(t *testing.T) {
 
 	tests := []struct {
@@ -39,83 +43,83 @@ func TestCheckE2E(t *testing.T) {
 		{
 			description: "check returns the latest version if there is no previous",
 			source: resource.Source{
-				Repository:  "itsdalmo/test-repository",
+				Repository:  repo,
 				AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN"),
 			},
 			version: resource.Version{},
 			expected: resource.CheckResponse{
-				resource.Version{PR: latestPullRequestID, Commit: latestCommitID, CommittedDate: latestDateTime},
+				resource.Version{PR: latestPullRequestID, Commit: latestCommitID, UpdatedDate: latestDateTime},
 			},
 		},
 
 		{
 			description: "check returns the previous version when its still latest",
 			source: resource.Source{
-				Repository:  "itsdalmo/test-repository",
+				Repository:  repo,
 				AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN"),
 			},
-			version: resource.Version{PR: latestPullRequestID, Commit: latestCommitID, CommittedDate: latestDateTime},
+			version: resource.Version{PR: latestPullRequestID, Commit: latestCommitID, UpdatedDate: latestDateTime},
 			expected: resource.CheckResponse{
-				resource.Version{PR: latestPullRequestID, Commit: latestCommitID, CommittedDate: latestDateTime},
+				resource.Version{PR: latestPullRequestID, Commit: latestCommitID, UpdatedDate: latestDateTime},
 			},
 		},
 
 		{
 			description: "check returns all new versions since the last",
 			source: resource.Source{
-				Repository:  "itsdalmo/test-repository",
+				Repository:  repo,
 				AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN"),
 			},
-			version: resource.Version{PR: targetPullRequestID, Commit: targetCommitID, CommittedDate: targetDateTime},
+			version: resource.Version{PR: targetPullRequestID, Commit: targetCommitID, UpdatedDate: targetDateTime},
 			expected: resource.CheckResponse{
-				resource.Version{PR: latestPullRequestID, Commit: latestCommitID, CommittedDate: latestDateTime},
+				resource.Version{PR: latestPullRequestID, Commit: latestCommitID, UpdatedDate: latestDateTime},
 			},
 		},
 
 		{
 			description: "check will only return versions that match the specified paths",
 			source: resource.Source{
-				Repository:  "itsdalmo/test-repository",
+				Repository:  repo,
 				AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN"),
 				Paths:       []string{"*.md"},
 			},
 			version: resource.Version{},
 			expected: resource.CheckResponse{
-				resource.Version{PR: targetPullRequestID, Commit: targetCommitID, CommittedDate: targetDateTime},
+				resource.Version{PR: targetPullRequestID, Commit: targetCommitID, UpdatedDate: targetDateTime},
 			},
 		},
 
 		{
 			description: "check will skip versions which only match the ignore paths",
 			source: resource.Source{
-				Repository:  "itsdalmo/test-repository",
+				Repository:  repo,
 				AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN"),
 				IgnorePaths: []string{"*.txt"},
 			},
 			version: resource.Version{},
 			expected: resource.CheckResponse{
-				resource.Version{PR: targetPullRequestID, Commit: targetCommitID, CommittedDate: targetDateTime},
+				resource.Version{PR: targetPullRequestID, Commit: targetCommitID, UpdatedDate: targetDateTime},
 			},
 		},
 
 		{
 			description: "check works with custom endpoints",
 			source: resource.Source{
-				Repository:  "itsdalmo/test-repository",
+				Repository:  repo,
 				AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN"),
 				V3Endpoint:  "https://api.github.com/",
 				V4Endpoint:  "https://api.github.com/graphql",
 			},
 			version: resource.Version{},
 			expected: resource.CheckResponse{
-				resource.Version{PR: latestPullRequestID, Commit: latestCommitID, CommittedDate: latestDateTime},
+				resource.Version{PR: latestPullRequestID, Commit: latestCommitID, UpdatedDate: latestDateTime},
 			},
 		},
 
 		{
 			description: "check works with custom base branch",
 			source: resource.Source{
-				Repository:    "itsdalmo/test-repository",
+				Repository:    repo,
 				AccessToken:   os.Getenv("GITHUB_ACCESS_TOKEN"),
 				V3Endpoint:    "https://api.github.com/",
 				V4Endpoint:    "https://api.github.com/graphql",
@@ -124,7 +128,7 @@ func TestCheckE2E(t *testing.T) {
 			},
 			version: resource.Version{},
 			expected: resource.CheckResponse{
-				resource.Version{PR: developPullRequestID, Commit: developCommitID, CommittedDate: developDateTime},
+				resource.Version{PR: developPullRequestID, Commit: developCommitID, UpdatedDate: developDateTime},
 			},
 		},
 
@@ -202,15 +206,15 @@ func TestGetAndPutE2E(t *testing.T) {
 		{
 			description: "get and put works",
 			source: resource.Source{
-				Repository:  "itsdalmo/test-repository",
+				Repository:  repo,
 				V3Endpoint:  "https://api.github.com/",
 				V4Endpoint:  "https://api.github.com/graphql",
 				AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN"),
 			},
 			version: resource.Version{
-				PR:            targetPullRequestID,
-				Commit:        targetCommitID,
-				CommittedDate: time.Time{},
+				PR:          targetPullRequestID,
+				Commit:      targetCommitID,
+				UpdatedDate: time.Time{},
 			},
 			getParameters:  resource.GetParameters{},
 			putParameters:  resource.PutParameters{},
@@ -232,44 +236,44 @@ func TestGetAndPutE2E(t *testing.T) {
 		{
 			description: "get works when rebasing",
 			source: resource.Source{
-				Repository:  "itsdalmo/test-repository",
+				Repository:  repo,
 				V3Endpoint:  "https://api.github.com/",
 				V4Endpoint:  "https://api.github.com/graphql",
 				AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN"),
 			},
 			version: resource.Version{
-				PR:            targetPullRequestID,
-				Commit:        targetCommitID,
-				CommittedDate: time.Time{},
+				PR:          targetPullRequestID,
+				Commit:      targetCommitID,
+				UpdatedDate: time.Time{},
 			},
 			getParameters: resource.GetParameters{
 				IntegrationTool: "rebase",
 			},
 			putParameters:       resource.PutParameters{},
 			versionString:       `{"pr":"4","commit":"a5114f6ab89f4b736655642a11e8d15ce363d882","committed":"0001-01-01T00:00:00Z"}`,
-			metadataString:      `[{"name":"pr","value":"4"},{"name":"url","value":"https://github.com/itsdalmo/test-repository/pull/4"},{"name":"head_name","value":"my_second_pull"},{"name":"head_sha","value":"a5114f6ab89f4b736655642a11e8d15ce363d882"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"93eeeedb8a16e6662062d1eca5655108977cc59a"},{"name":"message","value":"Push 2."},{"name":"author","value":"itsdalmo"}]`,
+			metadataString:      `[{"name":"pr","value":"4"},{"name":"url","value":"https://github.com/itsdalmo/test-repository/pull/4"},{"name":"head_name","value":"my_second_pull"},{"name":"head_sha","value":"a5114f6ab89f4b736655642a11e8d15ce363d882"},{"name":"head_short_sha","value":"a5114f6"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"93eeeedb8a16e6662062d1eca5655108977cc59a"},{"name":"message","value":"Push 2."},{"name":"author","value":"itsdalmo"}]`,
 			expectedCommitCount: 9,
 			expectedCommits:     []string{"Push 2."},
 		},
 		{
 			description: "get works when checkout",
 			source: resource.Source{
-				Repository:  "itsdalmo/test-repository",
+				Repository:  repo,
 				V3Endpoint:  "https://api.github.com/",
 				V4Endpoint:  "https://api.github.com/graphql",
 				AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN"),
 			},
 			version: resource.Version{
-				PR:            targetPullRequestID,
-				Commit:        targetCommitID,
-				CommittedDate: time.Time{},
+				PR:          targetPullRequestID,
+				Commit:      targetCommitID,
+				UpdatedDate: time.Time{},
 			},
 			getParameters: resource.GetParameters{
 				IntegrationTool: "checkout",
 			},
 			putParameters:       resource.PutParameters{},
 			versionString:       `{"pr":"4","commit":"a5114f6ab89f4b736655642a11e8d15ce363d882","committed":"0001-01-01T00:00:00Z"}`,
-			metadataString:      `[{"name":"pr","value":"4"},{"name":"url","value":"https://github.com/itsdalmo/test-repository/pull/4"},{"name":"head_name","value":"my_second_pull"},{"name":"head_sha","value":"a5114f6ab89f4b736655642a11e8d15ce363d882"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"93eeeedb8a16e6662062d1eca5655108977cc59a"},{"name":"message","value":"Push 2."},{"name":"author","value":"itsdalmo"}]`,
+			metadataString:      `[{"name":"pr","value":"4"},{"name":"url","value":"https://github.com/itsdalmo/test-repository/pull/4"},{"name":"head_name","value":"my_second_pull"},{"name":"head_sha","value":"a5114f6ab89f4b736655642a11e8d15ce363d882"},{"name":"head_short_sha","value":"a5114f6"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"93eeeedb8a16e6662062d1eca5655108977cc59a"},{"name":"message","value":"Push 2."},{"name":"author","value":"itsdalmo"}]`,
 			expectedCommitCount: 7,
 			expectedCommits: []string{
 				"Push 2.",
@@ -284,59 +288,59 @@ func TestGetAndPutE2E(t *testing.T) {
 		{
 			description: "get works with non-master bases",
 			source: resource.Source{
-				Repository:  "itsdalmo/test-repository",
+				Repository:  repo,
 				V3Endpoint:  "https://api.github.com/",
 				V4Endpoint:  "https://api.github.com/graphql",
 				AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN"),
 			},
 			version: resource.Version{
-				PR:            developPullRequestID,
-				Commit:        developCommitID,
-				CommittedDate: time.Time{},
+				PR:          developPullRequestID,
+				Commit:      developCommitID,
+				UpdatedDate: time.Time{},
 			},
 			getParameters:       resource.GetParameters{},
 			putParameters:       resource.PutParameters{},
 			versionString:       `{"pr":"6","commit":"ac771f3b69cbd63b22bbda553f827ab36150c640","committed":"0001-01-01T00:00:00Z"}`,
-			metadataString:      `[{"name":"pr","value":"6"},{"name":"url","value":"https://github.com/itsdalmo/test-repository/pull/6"},{"name":"head_name","value":"test-develop-pr"},{"name":"head_sha","value":"ac771f3b69cbd63b22bbda553f827ab36150c640"},{"name":"base_name","value":"develop"},{"name":"base_sha","value":"93eeeedb8a16e6662062d1eca5655108977cc59a"},{"name":"message","value":"[skip ci] Add a PR with a non-master base"},{"name":"author","value":"itsdalmo"}]`,
+			metadataString:      `[{"name":"pr","value":"6"},{"name":"url","value":"https://github.com/itsdalmo/test-repository/pull/6"},{"name":"head_name","value":"test-develop-pr"},{"name":"head_sha","value":"ac771f3b69cbd63b22bbda553f827ab36150c640"},{"name":"head_short_sha","value":"ac771f3"},{"name":"base_name","value":"develop"},{"name":"base_sha","value":"93eeeedb8a16e6662062d1eca5655108977cc59a"},{"name":"message","value":"[skip ci] Add a PR with a non-master base"},{"name":"author","value":"itsdalmo"}]`,
 			expectedCommitCount: 5,
 			expectedCommits:     []string{"[skip ci] Add a PR with a non-master base"}, // This merge ends up being fast-forwarded
 		},
 		{
 			description: "get works when ssl verification is disabled",
 			source: resource.Source{
-				Repository:          "itsdalmo/test-repository",
+				Repository:          repo,
 				V3Endpoint:          "https://api.github.com/",
 				V4Endpoint:          "https://api.github.com/graphql",
 				AccessToken:         os.Getenv("GITHUB_ACCESS_TOKEN"),
 				SkipSSLVerification: true,
 			},
 			version: resource.Version{
-				PR:            targetPullRequestID,
-				Commit:        targetCommitID,
-				CommittedDate: time.Time{},
+				PR:          targetPullRequestID,
+				Commit:      targetCommitID,
+				UpdatedDate: time.Time{},
 			},
 			getParameters:       resource.GetParameters{},
 			putParameters:       resource.PutParameters{},
 			versionString:       `{"pr":"4","commit":"a5114f6ab89f4b736655642a11e8d15ce363d882","committed":"0001-01-01T00:00:00Z"}`,
-			metadataString:      `[{"name":"pr","value":"4"},{"name":"url","value":"https://github.com/itsdalmo/test-repository/pull/4"},{"name":"head_name","value":"my_second_pull"},{"name":"head_sha","value":"a5114f6ab89f4b736655642a11e8d15ce363d882"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"93eeeedb8a16e6662062d1eca5655108977cc59a"},{"name":"message","value":"Push 2."},{"name":"author","value":"itsdalmo"}]`,
+			metadataString:      `[{"name":"pr","value":"4"},{"name":"url","value":"https://github.com/itsdalmo/test-repository/pull/4"},{"name":"head_name","value":"my_second_pull"},{"name":"head_sha","value":"a5114f6ab89f4b736655642a11e8d15ce363d882"},{"name":"head_short_sha","value":"a5114f6"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"93eeeedb8a16e6662062d1eca5655108977cc59a"},{"name":"message","value":"Push 2."},{"name":"author","value":"itsdalmo"}]`,
 			expectedCommitCount: 10,
 			expectedCommits:     []string{"Merge commit 'a5114f6ab89f4b736655642a11e8d15ce363d882'"},
 		},
 		{
 			description: "get works with git_depth",
 			source: resource.Source{
-				Repository:  "itsdalmo/test-repository",
+				Repository:  repo,
 				AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN"),
 			},
 			version: resource.Version{
-				PR:            targetPullRequestID,
-				Commit:        targetCommitID,
-				CommittedDate: time.Time{},
+				PR:          targetPullRequestID,
+				Commit:      targetCommitID,
+				UpdatedDate: time.Time{},
 			},
 			getParameters:       resource.GetParameters{GitDepth: 6},
 			putParameters:       resource.PutParameters{},
 			versionString:       `{"pr":"4","commit":"a5114f6ab89f4b736655642a11e8d15ce363d882","committed":"0001-01-01T00:00:00Z"}`,
-			metadataString:      `[{"name":"pr","value":"4"},{"name":"url","value":"https://github.com/itsdalmo/test-repository/pull/4"},{"name":"head_name","value":"my_second_pull"},{"name":"head_sha","value":"a5114f6ab89f4b736655642a11e8d15ce363d882"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"93eeeedb8a16e6662062d1eca5655108977cc59a"},{"name":"message","value":"Push 2."},{"name":"author","value":"itsdalmo"}]`,
+			metadataString:      `[{"name":"pr","value":"4"},{"name":"url","value":"https://github.com/itsdalmo/test-repository/pull/4"},{"name":"head_name","value":"my_second_pull"},{"name":"head_sha","value":"a5114f6ab89f4b736655642a11e8d15ce363d882"},{"name":"head_short_sha","value":"a5114f6"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"93eeeedb8a16e6662062d1eca5655108977cc59a"},{"name":"message","value":"Push 2."},{"name":"author","value":"itsdalmo"}]`,
 			expectedCommitCount: 9,
 			expectedCommits: []string{
 				"Merge commit 'a5114f6ab89f4b736655642a11e8d15ce363d882'",
@@ -353,20 +357,20 @@ func TestGetAndPutE2E(t *testing.T) {
 		{
 			description: "get works with list_changed_files",
 			source: resource.Source{
-				Repository:  "itsdalmo/test-repository",
+				Repository:  repo,
 				AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN"),
 			},
 			version: resource.Version{
-				PR:            targetPullRequestID,
-				Commit:        targetCommitID,
-				CommittedDate: time.Time{},
+				PR:          targetPullRequestID,
+				Commit:      targetCommitID,
+				UpdatedDate: time.Time{},
 			},
 			getParameters: resource.GetParameters{
 				ListChangedFiles: true,
 			},
 			putParameters:       resource.PutParameters{},
 			versionString:       `{"pr":"4","commit":"a5114f6ab89f4b736655642a11e8d15ce363d882","committed":"0001-01-01T00:00:00Z"}`,
-			metadataString:      `[{"name":"pr","value":"4"},{"name":"url","value":"https://github.com/itsdalmo/test-repository/pull/4"},{"name":"head_name","value":"my_second_pull"},{"name":"head_sha","value":"a5114f6ab89f4b736655642a11e8d15ce363d882"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"93eeeedb8a16e6662062d1eca5655108977cc59a"},{"name":"message","value":"Push 2."},{"name":"author","value":"itsdalmo"}]`,
+			metadataString:      `[{"name":"pr","value":"4"},{"name":"url","value":"https://github.com/itsdalmo/test-repository/pull/4"},{"name":"head_name","value":"my_second_pull"},{"name":"head_sha","value":"a5114f6ab89f4b736655642a11e8d15ce363d882"},{"name":"head_short_sha","value":"a5114f6"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"93eeeedb8a16e6662062d1eca5655108977cc59a"},{"name":"message","value":"Push 2."},{"name":"author","value":"itsdalmo"}]`,
 			filesString:         "README.md\ntest.txt\n",
 			expectedCommitCount: 10,
 			expectedCommits:     []string{"Merge commit 'a5114f6ab89f4b736655642a11e8d15ce363d882'"},

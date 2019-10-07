@@ -1,9 +1,9 @@
-FROM golang:1.12 as builder
+FROM golang:1.13.1 as builder
 ADD . /go/src/github.com/telia-oss/github-pr-resource
 WORKDIR /go/src/github.com/telia-oss/github-pr-resource
-RUN go get -u -v github.com/go-task/task/cmd/task && task build
+RUN make build
 
-FROM alpine:3.8 as resource
+FROM alpine:3.10 as resource
 COPY --from=builder /go/src/github.com/telia-oss/github-pr-resource/build /opt/resource
 RUN apk add --update --no-cache \
     git \

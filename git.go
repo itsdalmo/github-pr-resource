@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/url"
 	"os"
 	"os/exec"
@@ -18,8 +19,9 @@ import (
 type Git interface {
 	Init(string) error
 	Pull(string, string, int) error
+	Clone(string, string, int) error
 	RevParse(string) (string, error)
-	Fetch(string, int, int) error
+	Fetch(int, int) error
 	Checkout(string, string) error
 	Merge(string) error
 	Rebase(string, string) error
@@ -61,13 +63,10 @@ func (g *GitClient) Init(branch string) error {
 	if err := g.command("git", "checkout", "-b", branch).Run(); err != nil {
 		return fmt.Errorf("checkout to '%s' failed: %s", branch, err)
 	}
-	if err := g.command("git", "config", "user.name", "concourse-ci").Run(); err != nil {
-		return fmt.Errorf("failed to configure git user: %s", err)
-	}
-	if err := g.command("git", "config", "user.email", "concourse@local").Run(); err != nil {
-		return fmt.Errorf("failed to configure git email: %s", err)
-	}
-	return nil
+
+	log.Println("initialized repository:", branch)
+
+	return g.Config()
 }
 
 // Pull ...
@@ -77,20 +76,61 @@ func (g *GitClient) Pull(uri, branch string, depth int) error {
 		return err
 	}
 
-	args := []string{"pull", endpoint + ".git", branch}
-	if depth > 0 {
-		args = append(args, "--depth", strconv.Itoa(depth))
+	if err := g.command("git", "remote", "add", "origin", endpoint+".git").Run(); err != nil {
+		return fmt.Errorf("failed to set remote origin: %s", err)
 	}
+
+	args := []string{"pull", "origin", branch}
+	args = appendDepth(args, depth)
 	cmd := g.command("git", args...)
 
 	// Discard output to have zero chance of logging the access token.
 	cmd.Stdout = ioutil.Discard
 	cmd.Stderr = ioutil.Discard
 
+	log.Println("pulling baseref:", args)
+
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("clone failed: %s", err)
 	}
+
 	return nil
+}
+
+// Config ...
+func (g *GitClient) Config() error {
+	if err := g.command("git", "config", "user.name", "concourse-ci").Run(); err != nil {
+		return fmt.Errorf("failed to configure git user: %s", err)
+	}
+	if err := g.command("git", "config", "user.email", "concourse@local").Run(); err != nil {
+		return fmt.Errorf("failed to configure git email: %s", err)
+	}
+
+	return nil
+}
+
+// Clone ...
+func (g *GitClient) Clone(uri, branch string, depth int) error {
+	endpoint, err := g.Endpoint(uri)
+	if err != nil {
+		return err
+	}
+
+	args := []string{"clone", endpoint + ".git", "-b", branch, "."}
+	args = appendDepth(args, depth)
+	cmd := g.command("git", args...)
+
+	// Discard output to have zero chance of logging the access token.
+	cmd.Stdout = ioutil.Discard
+	cmd.Stderr = ioutil.Discard
+
+	log.Println("cloning baseref:", args)
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("clone failed: %s", err)
+	}
+
+	return g.Config()
 }
 
 // RevParse retrieves the SHA of the given branch.
@@ -105,21 +145,21 @@ func (g *GitClient) RevParse(branch string) (string, error) {
 }
 
 // Fetch ...
-func (g *GitClient) Fetch(uri string, prNumber int, depth int) error {
-	endpoint, err := g.Endpoint(uri)
-	if err != nil {
-		return err
+func (g *GitClient) Fetch(prNumber, depth int) error {
+	args := []string{
+		"fetch",
+		"origin",
+		"-q",
+		fmt.Sprintf("pull/%s/head", strconv.Itoa(prNumber)),
 	}
-
-	args := []string{"fetch", endpoint, fmt.Sprintf("pull/%s/head", strconv.Itoa(prNumber))}
-	if depth > 0 {
-		args = append(args, "--depth", strconv.Itoa(depth))
-	}
+	args = appendDepth(args, depth)
 	cmd := g.command("git", args...)
 
 	// Discard output to have zero chance of logging the access token.
 	cmd.Stdout = ioutil.Discard
 	cmd.Stderr = ioutil.Discard
+
+	log.Println("fetching headref:", args)
 
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("fetch failed: %s", err)
@@ -127,9 +167,10 @@ func (g *GitClient) Fetch(uri string, prNumber int, depth int) error {
 	return nil
 }
 
-// CheckOut
+// Checkout ...
 func (g *GitClient) Checkout(branch, sha string) error {
-	if err := g.command("git", "checkout", "-b", branch, sha).Run(); err != nil {
+	log.Println("checkout:", branch, sha)
+	if err := g.command("git", "checkout", "-b", "pr-"+branch, sha).Run(); err != nil {
 		return fmt.Errorf("checkout failed: %s", err)
 	}
 
@@ -138,6 +179,7 @@ func (g *GitClient) Checkout(branch, sha string) error {
 
 // Merge ...
 func (g *GitClient) Merge(sha string) error {
+	log.Println("merging sha:", sha)
 	if err := g.command("git", "merge", sha, "--no-stat").Run(); err != nil {
 		return fmt.Errorf("merge failed: %s", err)
 	}
@@ -146,6 +188,7 @@ func (g *GitClient) Merge(sha string) error {
 
 // Rebase ...
 func (g *GitClient) Rebase(baseRef string, headSha string) error {
+	log.Println("rebasing:", baseRef, headSha)
 	if err := g.command("git", "rebase", baseRef, headSha).Run(); err != nil {
 		return fmt.Errorf("rebase failed: %s", err)
 	}
@@ -181,4 +224,12 @@ func (g *GitClient) Endpoint(uri string) (string, error) {
 	}
 	endpoint.User = url.UserPassword("x-oauth-basic", g.AccessToken)
 	return endpoint.String(), nil
+}
+
+func appendDepth(args []string, depth int) []string {
+	if depth > 0 {
+		args = append(args, []string{"--depth", strconv.Itoa(depth)}...)
+	}
+
+	return args
 }

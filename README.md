@@ -19,21 +19,22 @@ Make sure to check out [#migrating](#migrating) to learn more.
 
 ## Source Configuration
 
-| Parameter                   | Required | Example                          | Description                                                                                                                                                                                                                                                                                |
-|-----------------------------|----------|----------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `repository`                | Yes      | `itsdalmo/test-repository`       | The repository to target.                                                                                                                                                                                                                                                                  |
-| `access_token`              | Yes      |                                  | A Github Access Token with repository access (required for setting status on commits). N.B. If you want github-pr-resource to work with a private repository. Set `repo:full` permissions on the access token you create on GitHub. If it is a public repository, `repo:status` is enough. |
-| `v3_endpoint`               | No       | `https://api.github.com`         | Endpoint to use for the V3 Github API (Restful).                                                                                                                                                                                                                                           |
-| `v4_endpoint`               | No       | `https://api.github.com/graphql` | Endpoint to use for the V4 Github API (Graphql).                                                                                                                                                                                                                                           |
-| `paths`                     | No       | `terraform/*/*.tf`               | Only produce new versions if the PR includes changes to files that match one or more glob patterns or prefixes.                                                                                                                                                                            |
-| `ignore_paths`              | No       | `.ci/`                           | Inverse of the above. Pattern syntax is documented in [filepath.Match](https://golang.org/pkg/path/filepath/#Match), or a path prefix can be specified (e.g. `.ci/` will match everything in the `.ci` directory).                                                                         |
-| `disable_ci_skip`           | No       | `true`                           | Disable ability to skip builds with `[ci skip]` and `[skip ci]` in commit message or pull request title.                                                                                                                                                                                   |
-| `skip_ssl_verification`     | No       | `true`                           | Disable SSL/TLS certificate validation on git and API clients. Use with care!                                                                                                                                                                                                              |
-| `disable_forks`             | No       | `true`                           | Disable triggering of the resource if the pull request's fork repository is different to the configured repository.                                                                                                                                                                        |
-| `required_review_approvals` | No       | `2`                              | Disable triggering of the resource if the pull request does not have at least `X` approved review(s).                                                                                                                                                                                      | 
-| `git_crypt_key`             | No       | `AEdJVENSWVBUS0VZAAAAA...`       | Base64 encoded git-crypt key. Setting this will unlock / decrypt the repository with git-crypt. To get the key simply execute `git-crypt export-key -- - | base64` in an encrypted repository.                                                                                             |
-| `base_branch`               | No       | `master`                         | Name of a branch. The pipeline will only trigger on pull requests against the specified branch.                                                                                                                                                                                            |
-| `labels`                    | No       | `["bug", "enhancement"]`         | The labels on the PR. The pipeline will only trigger on pull requests having at least one of the specified labels.                                                                                                                                                                         |
+| Parameter                   | Required | Example                          | Description  |
+|-----------------------------|----------|----------------------------------|--------------|
+| `repository`                | Yes      | `itsdalmo/test-repository`       | The repository to target |
+| `access_token`              | Yes      |                                  | A Github Access Token with repository access (required for setting status on commits). N.B. If you want github-pr-resource to work with a private repository. Set `repo:full` permissions on the access token you create on GitHub. If it is a public repository, `repo:status` is enough |
+| `v3_endpoint`               | NO       | `https://api.github.com`         | Endpoint to use for the V3 Github API (Restful) |
+| `v4_endpoint`               | NO       | `https://api.github.com/graphql` | Endpoint to use for the V4 Github API (Graphql) |
+| `paths`                     | No       | `terraform/**/*.tf`              | Only produce new versions if the PR includes changes to files that match one or more glob patterns using [go-gitignore](https://godoc.org/github.com/sabhiram/go-gitignore) |
+| `ignore_paths`              | No       | `.ci/**/*.yaml`                  | Inverse of the above, all changed files must match in order for the PR to be skipped |
+| `disable_ci_skip`           | No       | `true`                           | Disable ability to skip builds with `[ci skip]` and `[skip ci]` in commit message or pull request title |
+| `skip_ssl_verification`     | No       | `true`                           | Disable SSL/TLS certificate validation on git and API clients. Use with care! |
+| `disable_forks`             | No       | `true`                           | Disable triggering of the resource if the pull request's fork repository is different to the configured repository |
+| `git_crypt_key`             | No       | `AEdJVENSWVBUS0VZAAAAA...`       | Base64 encoded git-crypt key. Setting this will unlock / decrypt the repository with git-crypt. To get the key simply execute `git-crypt export-key -- - | base64` in an encrypted repository.  |
+| `base_branch`               | No       | `master`                         | Name of a branch. The pipeline will only trigger on pull requests against the specified branch |
+| `preview_schema`            | No       | `true`                           | if enabled, an `Accept: application/vnd.github.starfire-preview+json` header will be appended to each request to enable preview schema's that are hidden behind a feature flag on GitHub |
+| `required_review_approvals` | No       | `2`                              | Disable triggering of the resource if the pull request does not have at least `X` approved review(s) |
+| `labels`                    | No       | `["bug", "enhancement"]`         | The labels on the PR. The pipeline will only trigger on pull requests having at least one of the specified labels |
 
 Notes:
  - If `v3_endpoint` is set, `v4_endpoint` must also be set (and the other way around).
@@ -48,13 +49,46 @@ Notes:
 Produces new versions for all commits (after the last version) ordered by the committed date.
 A version is represented as follows:
 
-- `pr`: The pull request number.
-- `commit`: The commit SHA.
-- `committed`: Timestamp of when the commit was committed. Used to filter subsequent checks.
+- `pr`: The pull request number
+- `commit`: The commit SHA
+- `updated`: Timestamp of when the pull request was last updated at the time of the check
 
-If several commits are pushed to a given PR at the same time, the last commit will be the new version.
+If several commits are pushed to a given PR at the same time, the PR with the latest updated at will be the newest version.
+
+#### search
+
+The GraphQL search for pull requests uses the `Search` endpoint and follows the following pattern:
+
+`is:pr is:open repo:%s/%s updated:>%s sort:updated`
+
+Which means that we want to search for only OPEN PULL REQUESTS that have been UPDATED since the latest `updated` timestamp of the last check. To test this query, you can simply use the search box in the navigation of github.com.
+
+Then, we use the [PullRequestTimelineItemsConnection](https://developer.github.com/v4/object/pullrequesttimelineitemsconnection/) to fetch all commits / events on the PRs timeline since the latest `updated` timestamp of the last check. This allows us to iterate over the pull requests and filter them as is covered in the next section.
+
+#### filters
+
+There are many ways by which this resource filters pull requests and each filter is a function in the `filter.go` file within the `pullrequest` package. This makes it very easy to test the functionality of each filter. There are two types:
+
+* negative filters which when return true, the pull request should be excluded (skipped) from versions
+* positive filters which when return true, the pull request should be included from versions
+
+Current negative filters:
+
+* `pullrequest.SkipCI` which will exclude PRs containing `[skip ci|ci skip]` in the PR Title / Message
+* `pullrequest.BaseBranch` which will exclude PRs where the base branch (e.g. `master`) does not match the source configuration
+* `pullrequest.Fork` which will exclude PRs from forks when `disable_forks` is configured true
+
+Current positive filters:
+* `pullrequest.Created` which will include PRs with `Created == Updated` OR `Created > HeadRef.Commited | Authored | Pushed`
+* `pullrequest.BaseRefChanged` which will include PRs where a [BaseRefChanged](https://developer.github.com/v4/object/baserefchangedevent/) occurred
+* `pullrequest.BaseRefForcePushed` which will include PRs where a [BaseRefForcePushed](https://developer.github.com/v4/object/baserefforcepushedevent) occurred
+* `pullrequest.HeadRefForcePushed` which will include PRs where a [HeadRefForcePushed](https://developer.github.com/v4/object/headrefforcepushedevent) occurred
+* `pullrequest.Reopened` which will include PRs where a [BaseRefChanged](https://developer.github.com/v4/object/reopenedevent) occurred
+* `pullrequest.BuildCI` which will include PRs with a new comment containing `[build ci|ci build]`
+* `pullrequest.NewCommits` which will include PRs with a new commit since the last `updated` timestamp of the last check
 
 **Note on webhooks:**
+
 This resource does not implement any caching, so it should work well with webhooks (should be subscribed to `push` and `pull_request` events).
 One thing to keep in mind however, is that pull requests that are opened from a fork and commits to said fork will not
 generate notifications over the webhook. So if you have a repository with little traffic and expect pull requests from forks,
@@ -80,7 +114,7 @@ requested version and the metadata emitted by `get` are available to your tasks 
 - `.git/resource/changed_files` (if enabled by `list_changed_files`)
 
 The information in `metadata.json` is also available as individual files in the `.git/resource` directory, e.g. the `base_sha`
-is available as `.git/resource/base_sha`. For a complete list of available (individual) metadata files, please check the code 
+is available as `.git/resource/base_sha`. For a complete list of available (individual) metadata files, please check the code
 [here](https://github.com/telia-oss/github-pr-resource/blob/master/in.go#L66).
 
 When specifying `skip_download` the pull request volume mounted to subsequent tasks will be empty, which is a problem
@@ -102,7 +136,6 @@ Note that, should you retrigger a build in the hopes of testing the last commit 
 the base, Concourse will reuse the volume (i.e. not trigger a new `get`) if it still exists, which can produce
 unexpected results (#5). As such, re-testing a PR against a newer version of the base is best done by *pushing an
 empty commit to the PR*.
-
 
 #### `put`
 

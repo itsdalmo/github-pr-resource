@@ -1,31 +1,27 @@
 package resource_test
 
 import (
-	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strconv"
 	"testing"
 	"time"
 
-	"github.com/shurcooL/githubv4"
 	"github.com/stretchr/testify/assert"
 	resource "github.com/telia-oss/github-pr-resource"
 	"github.com/telia-oss/github-pr-resource/fakes"
+	"github.com/telia-oss/github-pr-resource/pullrequest"
 )
 
 func TestGet(t *testing.T) {
-
 	tests := []struct {
 		description    string
 		source         resource.Source
 		version        resource.Version
 		parameters     resource.GetParameters
-		pullRequest    *resource.PullRequest
+		pullRequest    pullrequest.PullRequest
 		versionString  string
 		metadataString string
-		files          []resource.ChangedFileObject
+		files          []string
 		filesString    string
 	}{
 		{
@@ -35,14 +31,14 @@ func TestGet(t *testing.T) {
 				AccessToken: "oauthtoken",
 			},
 			version: resource.Version{
-				PR:            "pr1",
-				Commit:        "commit1",
-				CommittedDate: time.Time{},
+				PR:          1,
+				Commit:      "commit1",
+				UpdatedDate: time.Time{},
 			},
 			parameters:     resource.GetParameters{},
-			pullRequest:    createTestPR(1, "master", false, false, 0, nil),
-			versionString:  `{"pr":"pr1","commit":"commit1","committed":"0001-01-01T00:00:00Z"}`,
-			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"}]`,
+			pullRequest:    createTestPR(1, "master", false, false, false, false, 0, nil),
+			versionString:  `{"pr":"1","commit":"commit1","updated":"0001-01-01T00:00:00Z"}`,
+			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"head_short_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"},{"name":"events","value":"[]"}]`,
 		},
 		{
 			description: "get supports unlocking with git crypt",
@@ -52,14 +48,14 @@ func TestGet(t *testing.T) {
 				GitCryptKey: "gitcryptkey",
 			},
 			version: resource.Version{
-				PR:            "pr1",
-				Commit:        "commit1",
-				CommittedDate: time.Time{},
+				PR:          1,
+				Commit:      "commit1",
+				UpdatedDate: time.Time{},
 			},
 			parameters:     resource.GetParameters{},
-			pullRequest:    createTestPR(1, "master", false, false, 0, nil),
-			versionString:  `{"pr":"pr1","commit":"commit1","committed":"0001-01-01T00:00:00Z"}`,
-			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"}]`,
+			pullRequest:    createTestPR(1, "master", false, false, false, false, 0, nil),
+			versionString:  `{"pr":"1","commit":"commit1","updated":"0001-01-01T00:00:00Z"}`,
+			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"head_short_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"},{"name":"events","value":"[]"}]`,
 		},
 		{
 			description: "get supports rebasing",
@@ -68,34 +64,34 @@ func TestGet(t *testing.T) {
 				AccessToken: "oauthtoken",
 			},
 			version: resource.Version{
-				PR:            "pr1",
-				Commit:        "commit1",
-				CommittedDate: time.Time{},
+				PR:          1,
+				Commit:      "commit1",
+				UpdatedDate: time.Time{},
 			},
 			parameters: resource.GetParameters{
 				IntegrationTool: "rebase",
 			},
-			pullRequest:    createTestPR(1, "master", false, false, 0, nil),
-			versionString:  `{"pr":"pr1","commit":"commit1","committed":"0001-01-01T00:00:00Z"}`,
-			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"}]`,
+			pullRequest:    createTestPR(1, "master", false, false, false, false, 0, nil),
+			versionString:  `{"pr":"1","commit":"commit1","updated":"0001-01-01T00:00:00Z"}`,
+			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"head_short_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"},{"name":"events","value":"[]"}]`,
 		},
 		{
-			description: "get supports checkout",
+			description: "get supports merge",
 			source: resource.Source{
 				Repository:  "itsdalmo/test-repository",
 				AccessToken: "oauthtoken",
 			},
 			version: resource.Version{
-				PR:            "pr1",
-				Commit:        "commit1",
-				CommittedDate: time.Time{},
+				PR:          1,
+				Commit:      "commit1",
+				UpdatedDate: time.Time{},
 			},
 			parameters: resource.GetParameters{
-				IntegrationTool: "checkout",
+				IntegrationTool: "merge",
 			},
-			pullRequest:    createTestPR(1, "master", false, false, 0, nil),
-			versionString:  `{"pr":"pr1","commit":"commit1","committed":"0001-01-01T00:00:00Z"}`,
-			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"}]`,
+			pullRequest:    createTestPR(1, "master", false, false, false, false, 0, nil),
+			versionString:  `{"pr":"1","commit":"commit1","updated":"0001-01-01T00:00:00Z"}`,
+			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"head_short_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"},{"name":"events","value":"[]"}]`,
 		},
 		{
 			description: "get supports git_depth",
@@ -104,16 +100,16 @@ func TestGet(t *testing.T) {
 				AccessToken: "oauthtoken",
 			},
 			version: resource.Version{
-				PR:            "pr1",
-				Commit:        "commit1",
-				CommittedDate: time.Time{},
+				PR:          1,
+				Commit:      "commit1",
+				UpdatedDate: time.Time{},
 			},
 			parameters: resource.GetParameters{
 				GitDepth: 2,
 			},
-			pullRequest:    createTestPR(1, "master", false, false, 0, nil),
-			versionString:  `{"pr":"pr1","commit":"commit1","committed":"0001-01-01T00:00:00Z"}`,
-			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"}]`,
+			pullRequest:    createTestPR(1, "master", false, false, false, false, 0, nil),
+			versionString:  `{"pr":"1","commit":"commit1","updated":"0001-01-01T00:00:00Z"}`,
+			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"head_short_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"},{"name":"events","value":"[]"}]`,
 		},
 		{
 			description: "get supports list_changed_files",
@@ -122,24 +118,17 @@ func TestGet(t *testing.T) {
 				AccessToken: "oauthtoken",
 			},
 			version: resource.Version{
-				PR:            "pr1",
-				Commit:        "commit1",
-				CommittedDate: time.Time{},
+				PR:          1,
+				Commit:      "commit1",
+				UpdatedDate: time.Time{},
 			},
 			parameters: resource.GetParameters{
 				ListChangedFiles: true,
 			},
-			pullRequest: createTestPR(1, "master", false, false, 0, nil),
-			files: []resource.ChangedFileObject{
-				{
-					Path: "README.md",
-				},
-				{
-					Path: "Other.md",
-				},
-			},
-			versionString:  `{"pr":"pr1","commit":"commit1","committed":"0001-01-01T00:00:00Z"}`,
-			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"}]`,
+			pullRequest:    createTestPR(1, "master", false, false, false, false, 0, nil),
+			files:          []string{"README.md", "Other.md"},
+			versionString:  `{"pr":"1","commit":"commit1","updated":"0001-01-01T00:00:00Z"}`,
+			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"head_short_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"},{"name":"events","value":"[]"}]`,
 			filesString:    "README.md\nOther.md\n",
 		},
 	}
@@ -175,14 +164,15 @@ func TestGet(t *testing.T) {
 
 				// Verify individual files
 				files := map[string]string{
-					"pr":        "1",
-					"url":       "pr1 url",
-					"head_name": "pr1",
-					"head_sha":  "oid1",
-					"base_name": "master",
-					"base_sha":  "sha",
-					"message":   "commit message1",
-					"author":    "login1",
+					"pr":             "1",
+					"url":            "pr1 url",
+					"head_name":      "pr1",
+					"head_sha":       "oid1",
+					"head_short_sha": "oid1",
+					"base_name":      "master",
+					"base_sha":       "sha",
+					"message":        "commit message1",
+					"author":         "login1",
 				}
 
 				for filename, expected := range files {
@@ -204,49 +194,49 @@ func TestGet(t *testing.T) {
 			}
 
 			// Validate Git calls
-			if assert.Equal(t, 1, git.InitCallCount()) {
-				base := git.InitArgsForCall(0)
-				assert.Equal(t, tc.pullRequest.BaseRefName, base)
-			}
-
-			if assert.Equal(t, 1, git.PullCallCount()) {
-				url, base, depth := git.PullArgsForCall(0)
-				assert.Equal(t, tc.pullRequest.Repository.URL, url)
+			if assert.Equal(t, 1, git.CloneCallCount()) {
+				url, base, depth := git.CloneArgsForCall(0)
+				assert.Equal(t, tc.pullRequest.RepositoryURL, url)
 				assert.Equal(t, tc.pullRequest.BaseRefName, base)
 				assert.Equal(t, tc.parameters.GitDepth, depth)
 			}
 
-			if assert.Equal(t, 1, git.RevParseCallCount()) {
-				base := git.RevParseArgsForCall(0)
-				assert.Equal(t, tc.pullRequest.BaseRefName, base)
-			}
-
 			if assert.Equal(t, 1, git.FetchCallCount()) {
-				url, pr, depth := git.FetchArgsForCall(0)
-				assert.Equal(t, tc.pullRequest.Repository.URL, url)
+				pr, depth := git.FetchArgsForCall(0)
 				assert.Equal(t, tc.pullRequest.Number, pr)
 				assert.Equal(t, tc.parameters.GitDepth, depth)
 			}
 
 			switch tc.parameters.IntegrationTool {
 			case "rebase":
+				if assert.Equal(t, 1, git.RevParseCallCount()) {
+					base := git.RevParseArgsForCall(0)
+					assert.Equal(t, tc.pullRequest.BaseRefName, base)
+				}
+
 				if assert.Equal(t, 1, git.RebaseCallCount()) {
 					branch, tip := git.RebaseArgsForCall(0)
 					assert.Equal(t, tc.pullRequest.BaseRefName, branch)
-					assert.Equal(t, tc.pullRequest.Tip.OID, tip)
+					assert.Equal(t, tc.version.Commit, tip)
 				}
-			case "checkout":
+			case "checkout", "":
 				if assert.Equal(t, 1, git.CheckoutCallCount()) {
 					branch, sha := git.CheckoutArgsForCall(0)
 					assert.Equal(t, tc.pullRequest.HeadRefName, branch)
-					assert.Equal(t, tc.pullRequest.Tip.OID, sha)
+					assert.Equal(t, tc.version.Commit, sha)
 				}
-			default:
+			case "merge":
+				if assert.Equal(t, 1, git.RevParseCallCount()) {
+					base := git.RevParseArgsForCall(0)
+					assert.Equal(t, tc.pullRequest.BaseRefName, base)
+				}
+
 				if assert.Equal(t, 1, git.MergeCallCount()) {
 					tip := git.MergeArgsForCall(0)
-					assert.Equal(t, tc.pullRequest.Tip.OID, tip)
+					assert.Equal(t, tc.version.Commit, tip)
 				}
 			}
+
 			if tc.source.GitCryptKey != "" {
 				if assert.Equal(t, 1, git.GitCryptUnlockCallCount()) {
 					key := git.GitCryptUnlockArgsForCall(0)
@@ -272,9 +262,9 @@ func TestGetSkipDownload(t *testing.T) {
 				AccessToken: "oauthtoken",
 			},
 			version: resource.Version{
-				PR:            "pr1",
-				Commit:        "commit1",
-				CommittedDate: time.Time{},
+				PR:          1,
+				Commit:      "commit1",
+				UpdatedDate: time.Time{},
 			},
 			parameters: resource.GetParameters{SkipDownload: true},
 		},
@@ -296,74 +286,4 @@ func TestGetSkipDownload(t *testing.T) {
 			}
 		})
 	}
-}
-
-func createTestPR(
-	count int,
-	baseName string,
-	skipCI bool,
-	isCrossRepo bool,
-	approvedReviews int,
-	labels []string,
-) *resource.PullRequest {
-	n := strconv.Itoa(count)
-	d := time.Now().AddDate(0, 0, -count)
-	m := fmt.Sprintf("commit message%s", n)
-	if skipCI {
-		m = "[skip ci]" + m
-	}
-	approvedCount := approvedReviews
-
-	var labelObjects []resource.LabelObject
-	for _, l := range labels {
-		lObject := resource.LabelObject{
-			Name: l,
-		}
-
-		labelObjects = append(labelObjects, lObject)
-	}
-
-	return &resource.PullRequest{
-		PullRequestObject: resource.PullRequestObject{
-			ID:          fmt.Sprintf("pr%s", n),
-			Number:      count,
-			Title:       fmt.Sprintf("pr%s title", n),
-			URL:         fmt.Sprintf("pr%s url", n),
-			BaseRefName: baseName,
-			HeadRefName: fmt.Sprintf("pr%s", n),
-			Repository: struct{ URL string }{
-				URL: fmt.Sprintf("repo%s url", n),
-			},
-			IsCrossRepository: isCrossRepo,
-		},
-		Tip: resource.CommitObject{
-			ID:            fmt.Sprintf("commit%s", n),
-			OID:           fmt.Sprintf("oid%s", n),
-			CommittedDate: githubv4.DateTime{Time: d},
-			Message:       m,
-			Author: struct{ User struct{ Login string } }{
-				User: struct{ Login string }{
-					Login: fmt.Sprintf("login%s", n),
-				},
-			},
-		},
-		ApprovedReviewCount: approvedCount,
-		Labels:              labelObjects,
-	}
-}
-
-func createTestDirectory(t *testing.T) string {
-	dir, err := ioutil.TempDir("", "github-pr-resource")
-	if err != nil {
-		t.Fatalf("failed to create temporary directory")
-	}
-	return dir
-}
-
-func readTestFile(t *testing.T, path string) string {
-	b, err := ioutil.ReadFile(path)
-	if err != nil {
-		t.Fatalf("failed to read: %s: %s", path, err)
-	}
-	return string(b)
 }

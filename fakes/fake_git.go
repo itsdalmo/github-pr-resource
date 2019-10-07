@@ -20,12 +20,24 @@ type FakeGit struct {
 	checkoutReturnsOnCall map[int]struct {
 		result1 error
 	}
-	FetchStub        func(string, int, int) error
+	CloneStub        func(string, string, int) error
+	cloneMutex       sync.RWMutex
+	cloneArgsForCall []struct {
+		arg1 string
+		arg2 string
+		arg3 int
+	}
+	cloneReturns struct {
+		result1 error
+	}
+	cloneReturnsOnCall map[int]struct {
+		result1 error
+	}
+	FetchStub        func(int, int) error
 	fetchMutex       sync.RWMutex
 	fetchArgsForCall []struct {
-		arg1 string
+		arg1 int
 		arg2 int
-		arg3 int
 	}
 	fetchReturns struct {
 		result1 error
@@ -169,18 +181,79 @@ func (fake *FakeGit) CheckoutReturnsOnCall(i int, result1 error) {
 	}{result1}
 }
 
-func (fake *FakeGit) Fetch(arg1 string, arg2 int, arg3 int) error {
+func (fake *FakeGit) Clone(arg1 string, arg2 string, arg3 int) error {
+	fake.cloneMutex.Lock()
+	ret, specificReturn := fake.cloneReturnsOnCall[len(fake.cloneArgsForCall)]
+	fake.cloneArgsForCall = append(fake.cloneArgsForCall, struct {
+		arg1 string
+		arg2 string
+		arg3 int
+	}{arg1, arg2, arg3})
+	fake.recordInvocation("Clone", []interface{}{arg1, arg2, arg3})
+	fake.cloneMutex.Unlock()
+	if fake.CloneStub != nil {
+		return fake.CloneStub(arg1, arg2, arg3)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	fakeReturns := fake.cloneReturns
+	return fakeReturns.result1
+}
+
+func (fake *FakeGit) CloneCallCount() int {
+	fake.cloneMutex.RLock()
+	defer fake.cloneMutex.RUnlock()
+	return len(fake.cloneArgsForCall)
+}
+
+func (fake *FakeGit) CloneCalls(stub func(string, string, int) error) {
+	fake.cloneMutex.Lock()
+	defer fake.cloneMutex.Unlock()
+	fake.CloneStub = stub
+}
+
+func (fake *FakeGit) CloneArgsForCall(i int) (string, string, int) {
+	fake.cloneMutex.RLock()
+	defer fake.cloneMutex.RUnlock()
+	argsForCall := fake.cloneArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
+}
+
+func (fake *FakeGit) CloneReturns(result1 error) {
+	fake.cloneMutex.Lock()
+	defer fake.cloneMutex.Unlock()
+	fake.CloneStub = nil
+	fake.cloneReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeGit) CloneReturnsOnCall(i int, result1 error) {
+	fake.cloneMutex.Lock()
+	defer fake.cloneMutex.Unlock()
+	fake.CloneStub = nil
+	if fake.cloneReturnsOnCall == nil {
+		fake.cloneReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.cloneReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeGit) Fetch(arg1 int, arg2 int) error {
 	fake.fetchMutex.Lock()
 	ret, specificReturn := fake.fetchReturnsOnCall[len(fake.fetchArgsForCall)]
 	fake.fetchArgsForCall = append(fake.fetchArgsForCall, struct {
-		arg1 string
+		arg1 int
 		arg2 int
-		arg3 int
-	}{arg1, arg2, arg3})
-	fake.recordInvocation("Fetch", []interface{}{arg1, arg2, arg3})
+	}{arg1, arg2})
+	fake.recordInvocation("Fetch", []interface{}{arg1, arg2})
 	fake.fetchMutex.Unlock()
 	if fake.FetchStub != nil {
-		return fake.FetchStub(arg1, arg2, arg3)
+		return fake.FetchStub(arg1, arg2)
 	}
 	if specificReturn {
 		return ret.result1
@@ -195,17 +268,17 @@ func (fake *FakeGit) FetchCallCount() int {
 	return len(fake.fetchArgsForCall)
 }
 
-func (fake *FakeGit) FetchCalls(stub func(string, int, int) error) {
+func (fake *FakeGit) FetchCalls(stub func(int, int) error) {
 	fake.fetchMutex.Lock()
 	defer fake.fetchMutex.Unlock()
 	fake.FetchStub = stub
 }
 
-func (fake *FakeGit) FetchArgsForCall(i int) (string, int, int) {
+func (fake *FakeGit) FetchArgsForCall(i int) (int, int) {
 	fake.fetchMutex.RLock()
 	defer fake.fetchMutex.RUnlock()
 	argsForCall := fake.fetchArgsForCall[i]
-	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
+	return argsForCall.arg1, argsForCall.arg2
 }
 
 func (fake *FakeGit) FetchReturns(result1 error) {
@@ -602,6 +675,8 @@ func (fake *FakeGit) Invocations() map[string][][]interface{} {
 	defer fake.invocationsMutex.RUnlock()
 	fake.checkoutMutex.RLock()
 	defer fake.checkoutMutex.RUnlock()
+	fake.cloneMutex.RLock()
+	defer fake.cloneMutex.RUnlock()
 	fake.fetchMutex.RLock()
 	defer fake.fetchMutex.RUnlock()
 	fake.gitCryptUnlockMutex.RLock()

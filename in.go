@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+
+	"github.com/telia-oss/github-pr-resource/pullrequest"
 )
 
 // Get (business logic)
@@ -21,39 +23,41 @@ func Get(request GetRequest, github Github, git Git, outputDir string) (*GetResp
 	}
 
 	// Initialize and pull the base for the PR
-	if err := git.Init(pull.BaseRefName); err != nil {
-		return nil, err
-	}
-	if err := git.Pull(pull.Repository.URL, pull.BaseRefName, request.Params.GitDepth); err != nil {
-		return nil, err
-	}
-
-	// Get the last commit SHA in base for the metadata
-	baseSHA, err := git.RevParse(pull.BaseRefName)
+	err = git.Clone(pull.RepositoryURL, pull.BaseRefName, request.Params.GitDepth)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to clone repository: %s", err)
 	}
 
 	// Fetch the PR and merge the specified commit into the base
-	if err := git.Fetch(pull.Repository.URL, pull.Number, request.Params.GitDepth); err != nil {
+	if err := git.Fetch(pull.Number, request.Params.GitDepth); err != nil {
 		return nil, err
 	}
 
-	switch tool := request.Params.IntegrationTool; tool {
+	switch request.Params.IntegrationTool {
 	case "rebase":
-		if err := git.Rebase(pull.BaseRefName, pull.Tip.OID); err != nil {
+		pull.BaseRefOID, err = git.RevParse(pull.BaseRefName)
+		if err != nil {
 			return nil, err
 		}
-	case "merge", "":
-		if err := git.Merge(pull.Tip.OID); err != nil {
+
+		if err := git.Rebase(pull.BaseRefName, request.Version.Commit); err != nil {
 			return nil, err
 		}
-	case "checkout":
-		if err := git.Checkout(pull.HeadRefName, pull.Tip.OID); err != nil {
+	case "merge":
+		pull.BaseRefOID, err = git.RevParse(pull.BaseRefName)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := git.Merge(request.Version.Commit); err != nil {
+			return nil, err
+		}
+	case "checkout", "":
+		if err := git.Checkout(pull.HeadRefName, request.Version.Commit); err != nil {
 			return nil, err
 		}
 	default:
-		return nil, fmt.Errorf("invalid integration tool specified: %s", tool)
+		return nil, fmt.Errorf("invalid integration tool specified: %s", request.Params.IntegrationTool)
 	}
 
 	if request.Source.GitCryptKey != "" {
@@ -62,35 +66,28 @@ func Get(request GetRequest, github Github, git Git, outputDir string) (*GetResp
 		}
 	}
 
-	// Create the metadata
-	var metadata Metadata
-	metadata.Add("pr", strconv.Itoa(pull.Number))
-	metadata.Add("url", pull.URL)
-	metadata.Add("head_name", pull.HeadRefName)
-	metadata.Add("head_sha", pull.Tip.OID)
-	metadata.Add("base_name", pull.BaseRefName)
-	metadata.Add("base_sha", baseSHA)
-	metadata.Add("message", pull.Tip.Message)
-	metadata.Add("author", pull.Tip.Author.User.Login)
-
-	// Write version and metadata for reuse in PUT
 	path := filepath.Join(outputDir, ".git", "resource")
 	if err := os.MkdirAll(path, os.ModePerm); err != nil {
 		return nil, fmt.Errorf("failed to create output directory: %s", err)
 	}
-	b, err := json.Marshal(request.Version)
+
+	metadata := metadataFactory(pull)
+	b, err := json.Marshal(&metadata)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal version: %s", err)
+		return nil, err
 	}
-	if err := ioutil.WriteFile(filepath.Join(path, "version.json"), b, 0644); err != nil {
-		return nil, fmt.Errorf("failed to write version: %s", err)
-	}
-	b, err = json.Marshal(metadata)
+	err = writeFile("metadata", path, b)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal metadata: %s", err)
+		return nil, err
 	}
-	if err := ioutil.WriteFile(filepath.Join(path, "metadata.json"), b, 0644); err != nil {
-		return nil, fmt.Errorf("failed to write metadata: %s", err)
+
+	b, err = json.Marshal(&request.Version)
+	if err != nil {
+		return nil, err
+	}
+	err = writeFile("version", path, b)
+	if err != nil {
+		return nil, err
 	}
 
 	for _, d := range metadata {
@@ -99,11 +96,10 @@ func Get(request GetRequest, github Github, git Git, outputDir string) (*GetResp
 		if err := ioutil.WriteFile(filepath.Join(path, filename), content, 0644); err != nil {
 			return nil, fmt.Errorf("failed to write metadata file %s: %s", filename, err)
 		}
-
 	}
 
 	if request.Params.ListChangedFiles {
-		cfol, err := github.GetChangedFiles(request.Version.PR, request.Version.Commit)
+		cfol, err := github.GetChangedFiles(request.Version.PR)
 		if err != nil {
 			return nil, fmt.Errorf("failed to fetch list of changed files: %s", err)
 		}
@@ -111,7 +107,7 @@ func Get(request GetRequest, github Github, git Git, outputDir string) (*GetResp
 		var fl []byte
 
 		for _, v := range cfol {
-			fl = append(fl, []byte(v.Path+"\n")...)
+			fl = append(fl, []byte(v+"\n")...)
 		}
 
 		// Create List with changed files
@@ -126,12 +122,39 @@ func Get(request GetRequest, github Github, git Git, outputDir string) (*GetResp
 	}, nil
 }
 
+func metadataFactory(pull pullrequest.PullRequest) Metadata {
+	var metadata Metadata
+	metadata.Add("pr", strconv.Itoa(pull.Number))
+	metadata.Add("url", pull.URL)
+	metadata.Add("head_name", pull.HeadRefName)
+	metadata.Add("head_sha", pull.HeadRef.OID)
+	metadata.Add("head_short_sha", pull.HeadRef.AbbreviatedOID)
+	metadata.Add("base_name", pull.BaseRefName)
+	metadata.Add("base_sha", pull.BaseRefOID)
+	metadata.Add("message", pull.HeadRef.Message)
+	metadata.Add("author", pull.HeadRef.Author)
+	metadata.Add("events", fmt.Sprintf("%v", pull.Events))
+
+	return metadata
+}
+
+func writeFile(name, path string, b []byte) error {
+	if err := ioutil.WriteFile(filepath.Join(path, name+".json"), b, 0644); err != nil {
+		return fmt.Errorf("failed to write %s: %s", name, err)
+	}
+	return nil
+}
+
 // GetParameters ...
 type GetParameters struct {
-	SkipDownload     bool   `json:"skip_download"`
-	IntegrationTool  string `json:"integration_tool"`
-	GitDepth         int    `json:"git_depth"`
-	ListChangedFiles bool   `json:"list_changed_files"`
+	// SkipDownload will skip downloading the code to the volume, used with `put` steps
+	SkipDownload bool `json:"skip_download"`
+	// IntegrationTool defines the method of checking out the code (checkout [default], merge, rebase)
+	IntegrationTool string `json:"integration_tool"`
+	// GitDepth sets the number of commits to include in the clone (shallow clone)
+	GitDepth int `json:"git_depth"`
+	// ListChangedFiles generates a list of changed files in the `.git` directory
+	ListChangedFiles bool `json:"list_changed_files"`
 }
 
 // GetRequest ...

@@ -27,9 +27,12 @@ tasks:
     desc: Run test suite
     deps: [generate]
     cmds:
-    - gofmt -s -l -w .
-    - go vet -v ./...
-    - go test -race -v ./...
+      - |
+        {{ if ne (env "SKIP_TEST") "true" }}
+        gofmt -s -l -w .
+        go vet -v ./...
+        go test -race -v -cover ./...
+        {{ end }}
 
   e2e:
     desc: Run E2E test suite

@@ -11,34 +11,37 @@ import (
 
 // Put (business logic)
 func Put(request PutRequest, manager Github, inputDir string) (*PutResponse, error) {
-	if err := request.Params.Validate(); err != nil {
+	err := request.Params.Validate()
+	if err != nil {
 		return nil, fmt.Errorf("invalid parameters: %s", err)
 	}
 	path := filepath.Join(inputDir, request.Params.Path, ".git", "resource")
 
 	// Version available after a GET step.
 	var version Version
-	content, err := ioutil.ReadFile(filepath.Join(path, "version.json"))
+	b, err := readFile("version", path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read version from path: %s", err)
+		return nil, err
 	}
-	if err := json.Unmarshal(content, &version); err != nil {
+	err = json.Unmarshal(b, &version)
+	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal version from file: %s", err)
 	}
 
 	// Metadata available after a GET step.
 	var metadata Metadata
-	content, err = ioutil.ReadFile(filepath.Join(path, "metadata.json"))
+	b, err = readFile("metadata", path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read metadata from path: %s", err)
+		return nil, err
 	}
-	if err := json.Unmarshal(content, &metadata); err != nil {
+	err = json.Unmarshal(b, &metadata)
+	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal metadata from file: %s", err)
 	}
 
 	// Set status if specified
 	if p := request.Params; p.Status != "" {
-		if err := manager.UpdateCommitStatus(version.Commit, p.BaseContext, p.Context, p.Status, os.ExpandEnv(p.TargetURL), p.Description); err != nil {
+		if err := manager.UpdateCommitStatus(version.Commit, p.BaseContext, os.ExpandEnv(p.Context), p.Status, os.ExpandEnv(p.TargetURL), p.Description); err != nil {
 			return nil, fmt.Errorf("failed to set status: %s", err)
 		}
 	}
@@ -70,6 +73,15 @@ func Put(request PutRequest, manager Github, inputDir string) (*PutResponse, err
 		Version:  version,
 		Metadata: metadata,
 	}, nil
+}
+
+func readFile(name, path string) ([]byte, error) {
+	content, err := ioutil.ReadFile(filepath.Join(path, name+".json"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to read %s from path: %s", name, err)
+	}
+
+	return content, nil
 }
 
 // PutRequest ...

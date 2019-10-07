@@ -5,16 +5,17 @@ import (
 	"log"
 	"os"
 
-	"github.com/telia-oss/github-pr-resource"
+	resource "github.com/telia-oss/github-pr-resource"
+	rlog "github.com/telia-oss/github-pr-resource/log"
 )
 
 func main() {
 	var request resource.CheckRequest
 
-	decoder := json.NewDecoder(os.Stdin)
-	decoder.DisallowUnknownFields()
+	input := rlog.WriteStdin()
+	defer rlog.Close()
 
-	if err := decoder.Decode(&request); err != nil {
+	if err := json.Unmarshal(input, &request); err != nil {
 		log.Fatalf("failed to unmarshal request: %s", err)
 	}
 
@@ -33,4 +34,6 @@ func main() {
 	if err := json.NewEncoder(os.Stdout).Encode(response); err != nil {
 		log.Fatalf("failed to marshal response: %s", err)
 	}
+
+	log.Println("check complete")
 }

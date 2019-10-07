@@ -5,26 +5,27 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"path"
-	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/go-github/github"
 	"github.com/shurcooL/githubv4"
+	"github.com/telia-oss/github-pr-resource/pullrequest"
 	"golang.org/x/oauth2"
 )
 
 // Github for testing purposes.
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -o fakes/fake_github.go . Github
 type Github interface {
-	ListOpenPullRequests() ([]*PullRequest, error)
-	ListModifiedFiles(int) ([]string, error)
-	PostComment(string, string) error
-	GetPullRequest(string, string) (*PullRequest, error)
-	GetChangedFiles(string, string) ([]ChangedFileObject, error)
+	ListOpenPullRequests(prSince time.Time) ([]pullrequest.PullRequest, error)
+	PostComment(int, string) error
+	GetPullRequest(int, string) (pullrequest.PullRequest, error)
+	GetChangedFiles(int) ([]string, error)
 	UpdateCommitStatus(string, string, string, string, string, string) error
 }
 
@@ -43,22 +44,29 @@ func NewGithubClient(s *Source) (*GithubClient, error) {
 		return nil, err
 	}
 
+	ctx := context.TODO()
+	httpClient := http.Client{}
+
 	// Skip SSL verification for self-signed certificates
 	// source: https://github.com/google/go-github/pull/598#issuecomment-333039238
-	var ctx context.Context
 	if s.SkipSSLVerification {
-		insecureClient := &http.Client{Transport: &http.Transport{
+		log.Println("disabling SSL verification")
+		httpClient.Transport = &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		},
 		}
-		ctx = context.WithValue(context.TODO(), oauth2.HTTPClient, insecureClient)
-	} else {
-		ctx = context.TODO()
+		ctx = context.WithValue(ctx, oauth2.HTTPClient, &httpClient)
 	}
 
 	client := oauth2.NewClient(ctx, oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: s.AccessToken},
 	))
+
+	if s.PreviewSchema {
+		log.Println("attaching preview schema transport to client")
+		client.Transport = &PreviewSchemaTransport{
+			oauthTransport: client.Transport,
+		}
+	}
 
 	var v3 *github.Client
 	if s.V3Endpoint != "" {
@@ -96,121 +104,58 @@ func NewGithubClient(s *Source) (*GithubClient, error) {
 	}, nil
 }
 
-// ListOpenPullRequests gets the last commit on all open pull requests.
-func (m *GithubClient) ListOpenPullRequests() ([]*PullRequest, error) {
+// ListOpenPullRequests gets the last commit on all open pull requests
+func (m *GithubClient) ListOpenPullRequests(since time.Time) ([]pullrequest.PullRequest, error) {
+	return m.searchOpenPullRequests(since, 100)
+}
+
+func (m *GithubClient) searchOpenPullRequests(since time.Time, number int) ([]pullrequest.PullRequest, error) {
+	log.Println("building open pull requests query")
+
 	var query struct {
-		Repository struct {
-			PullRequests struct {
-				Edges []struct {
-					Node struct {
-						PullRequestObject
-						Reviews struct {
-							TotalCount int
-						} `graphql:"reviews(states: $prReviewStates)"`
-						Commits struct {
-							Edges []struct {
-								Node struct {
-									Commit CommitObject
-								}
-							}
-						} `graphql:"commits(last:$commitsLast)"`
-						Labels struct {
-							Edges []struct {
-								Node struct {
-									LabelObject
-								}
-							}
-						} `graphql:"labels(first:$labelsFirst)"`
-					}
+		Search struct {
+			Edges []struct {
+				Node struct {
+					PullRequestObject `graphql:"... on PullRequest"`
 				}
-				PageInfo struct {
-					EndCursor   githubv4.String
-					HasNextPage bool
-				}
-			} `graphql:"pullRequests(first:$prFirst,states:$prStates,after:$prCursor)"`
-		} `graphql:"repository(owner:$repositoryOwner,name:$repositoryName)"`
+			}
+			PageInfo struct {
+				EndCursor   githubv4.String
+				HasNextPage bool
+			}
+		} `graphql:"search(query:$q,type:ISSUE,last:$n,after:$c)"`
 	}
 
 	vars := map[string]interface{}{
-		"repositoryOwner": githubv4.String(m.Owner),
-		"repositoryName":  githubv4.String(m.Repository),
-		"prFirst":         githubv4.Int(100),
-		"prStates":        []githubv4.PullRequestState{githubv4.PullRequestStateOpen},
-		"prCursor":        (*githubv4.String)(nil),
-		"commitsLast":     githubv4.Int(1),
-		"prReviewStates":  []githubv4.PullRequestReviewState{githubv4.PullRequestReviewStateApproved},
-		"labelsFirst":     githubv4.Int(100),
+		"c": (*githubv4.String)(nil),
+		"s": githubv4.DateTime{Time: since},
+		"n": githubv4.Int(number),
+		"q": githubv4.String(fmt.Sprintf("is:pr is:open repo:%s/%s updated:>%s sort:updated", m.Owner, m.Repository, since.Format(time.RFC3339))),
 	}
 
-	var response []*PullRequest
+	var response []pullrequest.PullRequest
 	for {
 		if err := m.V4.Query(context.TODO(), &query, vars); err != nil {
 			return nil, err
 		}
-		for _, p := range query.Repository.PullRequests.Edges {
-			labels := make([]LabelObject, len(p.Node.Labels.Edges))
-			for _, l := range p.Node.Labels.Edges {
-				labels = append(labels, l.Node.LabelObject)
-			}
-
-			for _, c := range p.Node.Commits.Edges {
-				response = append(response, &PullRequest{
-					PullRequestObject:   p.Node.PullRequestObject,
-					Tip:                 c.Node.Commit,
-					ApprovedReviewCount: p.Node.Reviews.TotalCount,
-					Labels:              labels,
-				})
-			}
+		for _, p := range query.Search.Edges {
+			response = append(response, PullRequestFactory(p.Node.PullRequestObject))
 		}
-		if !query.Repository.PullRequests.PageInfo.HasNextPage {
+		if number < 100 || !query.Search.PageInfo.HasNextPage {
 			break
 		}
-		vars["prCursor"] = query.Repository.PullRequests.PageInfo.EndCursor
+		vars["c"] = query.Search.PageInfo.EndCursor
 	}
 	return response, nil
 }
 
-// ListModifiedFiles in a pull request (not supported by V4 API).
-func (m *GithubClient) ListModifiedFiles(prNumber int) ([]string, error) {
-	var files []string
-
-	opt := &github.ListOptions{
-		PerPage: 100,
-	}
-	for {
-		result, response, err := m.V3.PullRequests.ListFiles(
-			context.TODO(),
-			m.Owner,
-			m.Repository,
-			prNumber,
-			opt,
-		)
-		if err != nil {
-			return nil, err
-		}
-		for _, f := range result {
-			files = append(files, *f.Filename)
-		}
-		if response.NextPage == 0 {
-			break
-		}
-		opt.Page = response.NextPage
-	}
-	return files, nil
-}
-
 // PostComment to a pull request or issue.
-func (m *GithubClient) PostComment(prNumber, comment string) error {
-	pr, err := strconv.Atoi(prNumber)
-	if err != nil {
-		return fmt.Errorf("failed to convert pull request number to int: %s", err)
-	}
-
-	_, _, err = m.V3.Issues.CreateComment(
+func (m *GithubClient) PostComment(number int, comment string) error {
+	_, _, err := m.V3.Issues.CreateComment(
 		context.TODO(),
 		m.Owner,
 		m.Repository,
-		pr,
+		number,
 		&github.IssueComment{
 			Body: github.String(comment),
 		},
@@ -219,13 +164,8 @@ func (m *GithubClient) PostComment(prNumber, comment string) error {
 }
 
 // GetChangedFiles ...
-func (m *GithubClient) GetChangedFiles(prNumber string, commitRef string) ([]ChangedFileObject, error) {
-	pr, err := strconv.Atoi(prNumber)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert pull request number to int: %s", err)
-	}
-
-	var cfo []ChangedFileObject
+func (m *GithubClient) GetChangedFiles(number int) ([]string, error) {
+	log.Println("building pull request changed files query")
 
 	var filequery struct {
 		Repository struct {
@@ -240,20 +180,20 @@ func (m *GithubClient) GetChangedFiles(prNumber string, commitRef string) ([]Cha
 						EndCursor   githubv4.String
 						HasNextPage bool
 					} `graphql:"pageInfo"`
-				} `graphql:"files(first:$changedFilesFirst, after: $changedFilesEndCursor)"`
-			} `graphql:"pullRequest(number:$prNumber)"`
-		} `graphql:"repository(owner:$repositoryOwner,name:$repositoryName)"`
+				} `graphql:"files(first:100, after: $c)"`
+			} `graphql:"pullRequest(number:$n)"`
+		} `graphql:"repository(owner:$owner,name:$name)"`
 	}
 
-	offset := ""
+	files := []string{}
+	cursor := ""
 
 	for {
 		vars := map[string]interface{}{
-			"repositoryOwner":       githubv4.String(m.Owner),
-			"repositoryName":        githubv4.String(m.Repository),
-			"prNumber":              githubv4.Int(pr),
-			"changedFilesFirst":     githubv4.Int(100),
-			"changedFilesEndCursor": githubv4.String(offset),
+			"owner": githubv4.String(m.Owner),
+			"name":  githubv4.String(m.Repository),
+			"n":     githubv4.Int(number),
+			"c":     githubv4.String(cursor),
 		}
 
 		if err := m.V4.Query(context.TODO(), &filequery, vars); err != nil {
@@ -261,25 +201,22 @@ func (m *GithubClient) GetChangedFiles(prNumber string, commitRef string) ([]Cha
 		}
 
 		for _, f := range filequery.Repository.PullRequest.Files.Edges {
-			cfo = append(cfo, ChangedFileObject{Path: f.Node.Path})
+			files = append(files, f.Node.Path)
 		}
 
 		if !filequery.Repository.PullRequest.Files.PageInfo.HasNextPage {
 			break
 		}
 
-		offset = string(filequery.Repository.PullRequest.Files.PageInfo.EndCursor)
+		cursor = string(filequery.Repository.PullRequest.Files.PageInfo.EndCursor)
 	}
 
-	return cfo, nil
+	return files, nil
 }
 
 // GetPullRequest ...
-func (m *GithubClient) GetPullRequest(prNumber, commitRef string) (*PullRequest, error) {
-	pr, err := strconv.Atoi(prNumber)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert pull request number to int: %s", err)
-	}
+func (m *GithubClient) GetPullRequest(number int, commitRef string) (pullrequest.PullRequest, error) {
+	log.Println("building pull request query")
 
 	var query struct {
 		Repository struct {
@@ -291,35 +228,35 @@ func (m *GithubClient) GetPullRequest(prNumber, commitRef string) (*PullRequest,
 							Commit CommitObject
 						}
 					}
-				} `graphql:"commits(last:$commitsLast)"`
-			} `graphql:"pullRequest(number:$prNumber)"`
-		} `graphql:"repository(owner:$repositoryOwner,name:$repositoryName)"`
+				} `graphql:"commits(last:$last)"`
+			} `graphql:"pullRequest(number:$number)"`
+		} `graphql:"repository(owner:$owner,name:$name)"`
 	}
 
 	vars := map[string]interface{}{
-		"repositoryOwner": githubv4.String(m.Owner),
-		"repositoryName":  githubv4.String(m.Repository),
-		"prNumber":        githubv4.Int(pr),
-		"commitsLast":     githubv4.Int(100),
+		"s":      githubv4.DateTime{Time: time.Now().AddDate(-1, 0, 0)},
+		"owner":  githubv4.String(m.Owner),
+		"name":   githubv4.String(m.Repository),
+		"number": githubv4.Int(number),
+		"last":   githubv4.Int(100),
 	}
 
 	// TODO: Pagination - in case someone pushes > 100 commits before the build has time to start :p
 	if err := m.V4.Query(context.TODO(), &query, vars); err != nil {
-		return nil, err
+		return pullrequest.PullRequest{}, err
 	}
 
 	for _, c := range query.Repository.PullRequest.Commits.Edges {
 		if c.Node.Commit.OID == commitRef {
 			// Return as soon as we find the correct ref.
-			return &PullRequest{
-				PullRequestObject: query.Repository.PullRequest.PullRequestObject,
-				Tip:               c.Node.Commit,
-			}, nil
+			pull := PullRequestFactory(query.Repository.PullRequest.PullRequestObject)
+			pull.HeadRef = commitFactory(c.Node.Commit)
+			return pull, nil
 		}
 	}
 
 	// Return an error if the commit was not found
-	return nil, fmt.Errorf("commit with ref '%s' does not exist", commitRef)
+	return pullrequest.PullRequest{}, fmt.Errorf("commit with ref '%s' does not exist", commitRef)
 }
 
 // UpdateCommitStatus for a given commit (not supported by V4 API).
@@ -361,4 +298,94 @@ func parseRepository(s string) (string, string, error) {
 		return "", "", errors.New("malformed repository")
 	}
 	return parts[0], parts[1], nil
+}
+
+// PullRequestFactory generates a PullRequest object from a PullRequestObject
+func PullRequestFactory(p PullRequestObject) pullrequest.PullRequest {
+	labels := make([]string, 0)
+
+	for _, i := range p.Labels.Edges {
+		labels = append(labels, i.Node.LabelObject.Name)
+	}
+
+	events := make([]pullrequest.Event, 0)
+	comments := make([]pullrequest.Comment, 0)
+	commits := make([]pullrequest.Commit, 0)
+
+	for _, i := range p.TimelineItems.Edges {
+		switch i.Node.Typename {
+		case pullrequest.BaseRefChangedEvent:
+			events = append(events, pullrequest.Event{
+				Type:      pullrequest.BaseRefChangedEvent,
+				CreatedAt: i.Node.BaseRefChangedEvent.CreatedAt.Time,
+			})
+		case pullrequest.BaseRefForcePushedEvent:
+			events = append(events, pullrequest.Event{
+				Type:      pullrequest.BaseRefForcePushedEvent,
+				CreatedAt: i.Node.BaseRefForcePushedEvent.CreatedAt.Time,
+			})
+		case pullrequest.HeadRefForcePushedEvent:
+			events = append(events, pullrequest.Event{
+				Type:      pullrequest.HeadRefForcePushedEvent,
+				CreatedAt: i.Node.HeadRefForcePushedEvent.CreatedAt.Time,
+			})
+		case pullrequest.ReopenedEvent:
+			events = append(events, pullrequest.Event{
+				Type:      pullrequest.ReopenedEvent,
+				CreatedAt: i.Node.ReopenedEvent.CreatedAt.Time,
+			})
+		case pullrequest.IssueComment:
+			comments = append(comments, pullrequest.Comment{
+				CreatedAt: i.Node.IssueComment.CreatedAt.Time,
+				Body:      i.Node.IssueComment.BodyText,
+			})
+		case pullrequest.PullRequestCommit:
+			commits = append(commits, commitFactory(i.Node.PullRequestCommit.Commit))
+		}
+	}
+
+	return pullrequest.PullRequest{
+		ID:                  p.ID,
+		Number:              p.Number,
+		Title:               p.Title,
+		URL:                 p.URL,
+		RepositoryURL:       p.Repository.URL,
+		BaseRefName:         p.BaseRefName,
+		BaseRefOID:          p.BaseRefOID,
+		HeadRefName:         p.HeadRefName,
+		IsCrossRepository:   p.IsCrossRepository,
+		CreatedAt:           p.CreatedAt.Time,
+		UpdatedAt:           p.UpdatedAt.Time,
+		HeadRef:             commitFactory(p.HeadRef.Target.CommitObject),
+		Events:              events,
+		Commits:             commits,
+		Comments:            comments,
+		Labels:              labels,
+		ApprovedReviewCount: p.Reviews.TotalCount,
+	}
+}
+
+func commitFactory(c CommitObject) pullrequest.Commit {
+	return pullrequest.Commit{
+		OID:            c.OID,
+		AbbreviatedOID: c.AbbreviatedOID,
+		AuthoredDate:   c.AuthoredDate.Time,
+		CommittedDate:  c.CommittedDate.Time,
+		PushedDate:     c.PushedDate.Time,
+		Message:        c.Message,
+		Author:         c.Author.User.Login,
+	}
+}
+
+// PreviewSchemaTransport is used to access GraphQL schema's hidden behind an Accept header by GitHub
+type PreviewSchemaTransport struct {
+	oauthTransport http.RoundTripper
+}
+
+// RoundTrip appends the Accept header and then executes the parent RoundTrip Transport
+func (t *PreviewSchemaTransport) RoundTrip(r *http.Request) (*http.Response, error) {
+	log.Println("setting accept header for timelineItems & files connections preview schemas")
+	r.Header.Add("Accept", "application/vnd.github.starfire-preview+json, application/vnd.github.ocelot-preview+json")
+
+	return t.oauthTransport.RoundTrip(r)
 }
