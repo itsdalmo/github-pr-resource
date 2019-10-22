@@ -78,6 +78,9 @@ func Put(request PutRequest, manager Github, inputDir string) (*PutResponse, err
 		}
 		comment := string(content)
 		if comment != "" {
+			if p.PreformatCommentFile {
+				comment = fmt.Sprintf("```\n%s\n```", comment)
+			}
 			err = manager.PostComment(version.PR, os.ExpandEnv(comment))
 			if err != nil {
 				return nil, fmt.Errorf("failed to post comment: %s", err)
@@ -113,6 +116,7 @@ type PutParameters struct {
 	Description            string `json:"description"`
 	Status                 string `json:"status"`
 	CommentFile            string `json:"comment_file"`
+	PreformatCommentFile   bool   `json:"preformat_comment_file"`
 	Comment                string `json:"comment"`
 	DeletePreviousComments bool   `json:"delete_previous_comments"`
 }

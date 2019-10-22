@@ -2,7 +2,9 @@ package resource_test
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -15,11 +17,12 @@ import (
 func TestPut(t *testing.T) {
 
 	tests := []struct {
-		description string
-		source      resource.Source
-		version     resource.Version
-		parameters  resource.PutParameters
-		pullRequest *resource.PullRequest
+		description     string
+		source          resource.Source
+		version         resource.Version
+		parameters      resource.PutParameters
+		pullRequest     *resource.PullRequest
+		expectedComment string
 	}{
 		{
 			description: "put with no parameters does nothing",
@@ -140,7 +143,45 @@ func TestPut(t *testing.T) {
 			parameters: resource.PutParameters{
 				Comment: "comment",
 			},
-			pullRequest: createTestPR(1, "master", false, false, 0, nil),
+			pullRequest:     createTestPR(1, "master", false, false, 0, nil),
+			expectedComment: "comment",
+		},
+
+		{
+			description: "we can leave a comment from file on the pull request",
+			source: resource.Source{
+				Repository:  "itsdalmo/test-repository",
+				AccessToken: "oauthtoken",
+			},
+			version: resource.Version{
+				PR:            "pr1",
+				Commit:        "commit1",
+				CommittedDate: time.Time{},
+			},
+			parameters: resource.PutParameters{
+				CommentFile: "./comment.txt",
+			},
+			pullRequest:     createTestPR(1, "master", false, false, 0, nil),
+			expectedComment: "comment",
+		},
+
+		{
+			description: "we can leave a preformatted comment from file on the pull request",
+			source: resource.Source{
+				Repository:  "itsdalmo/test-repository",
+				AccessToken: "oauthtoken",
+			},
+			version: resource.Version{
+				PR:            "pr1",
+				Commit:        "commit1",
+				CommittedDate: time.Time{},
+			},
+			parameters: resource.PutParameters{
+				CommentFile:          "./comment.txt",
+				PreformatCommentFile: true,
+			},
+			pullRequest:     createTestPR(1, "master", false, false, 0, nil),
+			expectedComment: "```\ncomment\n```",
 		},
 
 		{
@@ -178,6 +219,10 @@ func TestPut(t *testing.T) {
 			_, err := resource.Get(getInput, github, git, dir)
 			require.NoError(t, err)
 
+			if tc.parameters.CommentFile != "" {
+				makeCommentFile(t, filepath.Join(dir, tc.parameters.CommentFile))
+			}
+
 			putInput := resource.PutRequest{Source: tc.source, Params: tc.parameters}
 			output, err := resource.Put(putInput, github, dir)
 
@@ -203,7 +248,15 @@ func TestPut(t *testing.T) {
 				if assert.Equal(t, 1, github.PostCommentCallCount()) {
 					pr, comment := github.PostCommentArgsForCall(0)
 					assert.Equal(t, tc.version.PR, pr)
-					assert.Equal(t, tc.parameters.Comment, comment)
+					assert.Equal(t, tc.expectedComment, comment)
+				}
+			}
+
+			if tc.parameters.CommentFile != "" {
+				if assert.Equal(t, 1, github.PostCommentCallCount()) {
+					pr, comment := github.PostCommentArgsForCall(0)
+					assert.Equal(t, tc.version.PR, pr)
+					assert.Equal(t, tc.expectedComment, comment)
 				}
 			}
 
@@ -312,5 +365,12 @@ func TestVariableSubstitution(t *testing.T) {
 			}
 
 		})
+	}
+}
+
+func makeCommentFile(t *testing.T, path string) {
+	content := []byte("comment")
+	if err := ioutil.WriteFile(path, content, 0644); err != nil {
+		t.Fatalf("failed to write file %s file: %s", path, err)
 	}
 }
