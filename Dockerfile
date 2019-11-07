@@ -10,7 +10,11 @@ RUN apk add --update --no-cache \
     openssh \
     && chmod +x /opt/resource/*
 ADD scripts/install_git_crypt.sh install_git_crypt.sh
-RUN ./install_git_crypt.sh && rm ./install_git_crypt.sh
+ADD scripts/install_git_lfs.sh install_git_lfs.sh
+RUN ./install_git_crypt.sh \
+    && rm ./install_git_crypt.sh \
+    && ./install_git_lfs.sh \
+    && rm ./install_git_lfs.sh
 
 FROM resource
 LABEL MAINTAINER=telia-oss
