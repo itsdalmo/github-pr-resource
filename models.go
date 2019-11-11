@@ -87,6 +87,7 @@ type PullRequestObject struct {
 	Number      int
 	Title       string
 	URL         string
+	Body        string
 	BaseRefName string
 	HeadRefName string
 	Repository  struct {

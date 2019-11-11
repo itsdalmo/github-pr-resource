@@ -42,7 +42,7 @@ func TestGet(t *testing.T) {
 			parameters:     resource.GetParameters{},
 			pullRequest:    createTestPR(1, "master", false, false, 0, nil),
 			versionString:  `{"pr":"pr1","commit":"commit1","committed":"0001-01-01T00:00:00Z"}`,
-			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"}]`,
+			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"},{"name":"body","value":"# Title1\n* Testing1\n* Testing2\n\n# Title 2\nTesting."}]`,
 		},
 		{
 			description: "get supports unlocking with git crypt",
@@ -59,7 +59,7 @@ func TestGet(t *testing.T) {
 			parameters:     resource.GetParameters{},
 			pullRequest:    createTestPR(1, "master", false, false, 0, nil),
 			versionString:  `{"pr":"pr1","commit":"commit1","committed":"0001-01-01T00:00:00Z"}`,
-			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"}]`,
+			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"},{"name":"body","value":"# Title1\n* Testing1\n* Testing2\n\n# Title 2\nTesting."}]`,
 		},
 		{
 			description: "get supports rebasing",
@@ -77,7 +77,7 @@ func TestGet(t *testing.T) {
 			},
 			pullRequest:    createTestPR(1, "master", false, false, 0, nil),
 			versionString:  `{"pr":"pr1","commit":"commit1","committed":"0001-01-01T00:00:00Z"}`,
-			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"}]`,
+			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"},{"name":"body","value":"# Title1\n* Testing1\n* Testing2\n\n# Title 2\nTesting."}]`,
 		},
 		{
 			description: "get supports checkout",
@@ -95,7 +95,7 @@ func TestGet(t *testing.T) {
 			},
 			pullRequest:    createTestPR(1, "master", false, false, 0, nil),
 			versionString:  `{"pr":"pr1","commit":"commit1","committed":"0001-01-01T00:00:00Z"}`,
-			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"}]`,
+			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"},{"name":"body","value":"# Title1\n* Testing1\n* Testing2\n\n# Title 2\nTesting."}]`,
 		},
 		{
 			description: "get supports git_depth",
@@ -113,7 +113,7 @@ func TestGet(t *testing.T) {
 			},
 			pullRequest:    createTestPR(1, "master", false, false, 0, nil),
 			versionString:  `{"pr":"pr1","commit":"commit1","committed":"0001-01-01T00:00:00Z"}`,
-			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"}]`,
+			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"},{"name":"body","value":"# Title1\n* Testing1\n* Testing2\n\n# Title 2\nTesting."}]`,
 		},
 		{
 			description: "get supports list_changed_files",
@@ -139,7 +139,7 @@ func TestGet(t *testing.T) {
 				},
 			},
 			versionString:  `{"pr":"pr1","commit":"commit1","committed":"0001-01-01T00:00:00Z"}`,
-			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"}]`,
+			metadataString: `[{"name":"pr","value":"1"},{"name":"url","value":"pr1 url"},{"name":"head_name","value":"pr1"},{"name":"head_sha","value":"oid1"},{"name":"base_name","value":"master"},{"name":"base_sha","value":"sha"},{"name":"message","value":"commit message1"},{"name":"author","value":"login1"},{"name":"body","value":"# Title1\n* Testing1\n* Testing2\n\n# Title 2\nTesting."}]`,
 			filesString:    "README.md\nOther.md\n",
 		},
 	}
@@ -183,6 +183,7 @@ func TestGet(t *testing.T) {
 					"base_sha":  "sha",
 					"message":   "commit message1",
 					"author":    "login1",
+					"body":      "# Title1\n* Testing1\n* Testing2\n\n# Title 2\nTesting.",
 				}
 
 				for filename, expected := range files {
@@ -329,6 +330,7 @@ func createTestPR(
 			Number:      count,
 			Title:       fmt.Sprintf("pr%s title", n),
 			URL:         fmt.Sprintf("pr%s url", n),
+			Body:        "# Title1\n* Testing1\n* Testing2\n\n# Title 2\nTesting.",
 			BaseRefName: baseName,
 			HeadRefName: fmt.Sprintf("pr%s", n),
 			Repository: struct{ URL string }{
