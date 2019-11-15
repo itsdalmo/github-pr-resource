@@ -17,6 +17,8 @@ import (
 	"golang.org/x/oauth2"
 )
 
+var debug = false
+
 // Github for testing purposes.
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -o fakes/fake_github.go . Github
 type Github interface {
@@ -293,6 +295,13 @@ func (m *GithubClient) GetPullRequest(prNumber, commitRef string) (*PullRequest,
 						}
 					}
 				} `graphql:"commits(last:$commitsLast)"`
+				Labels struct {
+					Edges []struct {
+						Node struct {
+							LabelObject
+						}
+					}
+				} `graphql:"labels(first:$labelsFirst)"`
 			} `graphql:"pullRequest(number:$prNumber)"`
 		} `graphql:"repository(owner:$repositoryOwner,name:$repositoryName)"`
 	}
@@ -302,6 +311,7 @@ func (m *GithubClient) GetPullRequest(prNumber, commitRef string) (*PullRequest,
 		"repositoryName":  githubv4.String(m.Repository),
 		"prNumber":        githubv4.Int(pr),
 		"commitsLast":     githubv4.Int(100),
+		"labelsFirst":     githubv4.Int(100),
 	}
 
 	// TODO: Pagination - in case someone pushes > 100 commits before the build has time to start :p
@@ -311,10 +321,16 @@ func (m *GithubClient) GetPullRequest(prNumber, commitRef string) (*PullRequest,
 
 	for _, c := range query.Repository.PullRequest.Commits.Edges {
 		if c.Node.Commit.OID == commitRef {
+			prLabels := query.Repository.PullRequest.Labels
+			labels := make([]LabelObject, len(prLabels.Edges))
+			for _, l := range prLabels.Edges {
+				labels = append(labels, l.Node.LabelObject)
+			}
 			// Return as soon as we find the correct ref.
 			return &PullRequest{
 				PullRequestObject: query.Repository.PullRequest.PullRequestObject,
 				Tip:               c.Node.Commit,
+				Labels:            labels,
 			}, nil
 		}
 	}
