@@ -189,6 +189,42 @@ func TestCheckE2E(t *testing.T) {
 	}
 }
 
+func TestCheckAPICostE2E(t *testing.T) {
+	tests := []struct {
+		description string
+		source      resource.Source
+		version     resource.Version
+		ceiling     int
+	}{
+		{
+			description: "cost does not exceed the defined ceiling",
+			source: resource.Source{
+				Repository:  "itsdalmo/test-repository",
+				AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN"),
+			},
+			version: resource.Version{PR: targetPullRequestID, Commit: targetCommitID, CommittedDate: targetDateTime},
+			ceiling: 1,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			githubClient, err := resource.NewGithubClient(&tc.source)
+			require.NoError(t, err)
+
+			before := getRemainingRateLimit(t, githubClient.V4)
+
+			input := resource.CheckRequest{Source: tc.source, Version: tc.version}
+			_, err = resource.Check(input, githubClient)
+			require.NoError(t, err)
+
+			// +1 since that is the cost of fetching the remaining rate limit
+			cost := before - getRemainingRateLimit(t, githubClient.V4) + 1
+			assert.True(t, tc.ceiling >= cost, "cost (%d) exceeds ceiling (%d)", cost, before)
+		})
+	}
+}
+
 func TestGetAndPutE2E(t *testing.T) {
 	tests := []struct {
 		description         string
@@ -584,4 +620,16 @@ func readTestFile(t *testing.T, path string) string {
 		t.Fatalf("failed to read: %s: %s", path, err)
 	}
 	return string(b)
+}
+
+func getRemainingRateLimit(t *testing.T, c *githubv4.Client) int {
+	var query struct {
+		RateLimit struct {
+			Remaining int
+		}
+	}
+	if err := c.Query(context.TODO(), &query, nil); err != nil {
+		t.Fatalf("rate limit query: %s", err)
+	}
+	return query.RateLimit.Remaining
 }
