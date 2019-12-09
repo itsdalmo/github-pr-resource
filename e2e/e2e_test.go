@@ -202,8 +202,8 @@ func TestCheckAPICostE2E(t *testing.T) {
 				Repository:  "itsdalmo/test-repository",
 				AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN"),
 			},
-			version: resource.Version{PR: targetPullRequestID, Commit: targetCommitID, CommittedDate: targetDateTime},
-			ceiling: 1,
+			version: resource.Version{},
+			ceiling: 2,
 		},
 	}
 
@@ -219,7 +219,7 @@ func TestCheckAPICostE2E(t *testing.T) {
 			require.NoError(t, err)
 
 			cost := before - getRemainingRateLimit(t, githubClient.V4)
-			assert.True(t, tc.ceiling >= cost, "cost (%d) exceeds ceiling (%d)", cost, tc.ceiling)
+			assert.Equal(t, tc.ceiling, cost, "cost against ratelimit is fixed")
 		})
 	}
 }
