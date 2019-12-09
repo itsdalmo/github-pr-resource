@@ -472,7 +472,7 @@ func TestGetAndPutE2E(t *testing.T) {
 }
 
 func TestPutCommentsE2E(t *testing.T) {
-	owner := "rcoy-v"
+	owner := "itsdalmo"
 	repo := "github-pr-resource-e2e"
 
 	tests := []struct {
