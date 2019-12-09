@@ -179,19 +179,26 @@ jobs:
 
 ## Costs
 
-The Github API(s) have a rate limit of 5000 requests per hour (per user). This resource will incur the following costs:
+The Github API(s) have a rate limit of 5000 requests per hour (per user). For the V3 API this essentially
+translates to 5000 requests, whereas for the V4 API (GraphQL)  the calculation is a bit more involved:
+https://developer.github.com/v4/guides/resource-limitations/#calculating-a-rate-limit-score-before-running-the-call
 
-- `check`: Minimum 1, max 1 per 100th *open* pull request.
-- `in`: Fixed cost of 1. Fetches the pull request at the given commit.
-- `out`: Minimum 1, max 3 (1 for each of `status`, `comment` and `comment_file`).
+Ref the above, this resource will incur the following (estimated) costs:
+- `check`:
+  - List the last 100 (open) PRs: 100
+  - Get the last commit from the 100 PRs: 100
+  - Get the first 100 labels from each PR: 100x100 = 1000
+  - Total: 1200/100 = 12. This is the _max_ if you have 100 open PRs and 100 labels on each PR.
+- `get`: Fixed cost of 1. Fetches the pull request at the given commit.
+- `put`: Uses the V3 API and has a min cost of 1, +1 for each of `status`, `comment` and `comment_file` etc.
 
-E.g., typical use for a repository with 125 open pull requests will incur the following costs for every commit:
+E.g., typical use for a repository with 125 open pull requests, with on average 3 labels per PR will incur the following costs for every commit:
 
-- `check`: 2 (paginate 125 PR's with 100 per page)
+- `check`: List PRs: 2, Latest commit: 125, Lables: 125x3=375. Total: 5.
 - `in`: 1 (fetch the pull request at the given commit ref)
 - `out`: 1 (set status on the commit)
 
-With a rate limit of 5000 per hour, it could handle 1250 commits between all of the 125 open pull requests in the span of that hour.
+With a rate limit of 5000 per hour, it could handle ~700 commits between all of the 125 open pull requests in the span of that hour.
 
 ## Migrating
 
