@@ -194,7 +194,7 @@ Ref the above, this resource will incur the following (estimated) costs:
 
 E.g., typical use for a repository with 125 open pull requests, with on average 3 labels per PR will incur the following costs for every commit:
 
-- `check`: List PRs: 2, Latest commit: 125, Lables: 125x3=375. Total: 5.
+- `check`: List PRs: 2, Latest commit: 125, Lables: 125x3=375. The total cost is then (2+125+375)/100=5.
 - `in`: 1 (fetch the pull request at the given commit ref)
 - `out`: 1 (set status on the commit)
 
