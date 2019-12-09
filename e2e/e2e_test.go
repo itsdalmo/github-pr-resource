@@ -218,8 +218,7 @@ func TestCheckAPICostE2E(t *testing.T) {
 			_, err = resource.Check(input, githubClient)
 			require.NoError(t, err)
 
-			// +1 since that is the cost of fetching the remaining rate limit
-			cost := before - getRemainingRateLimit(t, githubClient.V4) + 1
+			cost := before - getRemainingRateLimit(t, githubClient.V4)
 			assert.True(t, tc.ceiling >= cost, "cost (%d) exceeds ceiling (%d)", cost, tc.ceiling)
 		})
 	}
