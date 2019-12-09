@@ -187,8 +187,8 @@ Ref the above, this resource will incur the following (estimated) costs:
 - `check`:
   - List the last 100 (open) PRs: 100
   - Get the last commit from the 100 PRs: 100
-  - Get the first 100 labels from each PR: 100x100 = 1000
-  - Total: 1200/100 = 12. This is the _max_ if you have 100 open PRs and 100 labels on each PR.
+  - Get the first 100 labels from each PR: 100x100 = 10000
+  - Total: 10200/100 = 102. This is the _max_ if you have 100 open PRs and 100 labels on each PR.
 - `get`: Fixed cost of 1. Fetches the pull request at the given commit.
 - `put`: Uses the V3 API and has a min cost of 1, +1 for each of `status`, `comment` and `comment_file` etc.
 
