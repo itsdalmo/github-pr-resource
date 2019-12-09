@@ -180,25 +180,17 @@ jobs:
 ## Costs
 
 The Github API(s) have a rate limit of 5000 requests per hour (per user). For the V3 API this essentially
-translates to 5000 requests, whereas for the V4 API (GraphQL)  the calculation is a bit more involved:
+translates to 5000 requests, whereas for the V4 API (GraphQL)  the calculation is more involved:
 https://developer.github.com/v4/guides/resource-limitations/#calculating-a-rate-limit-score-before-running-the-call
 
-Ref the above, this resource will incur the following (estimated) costs:
-- `check`:
-  - List the last 100 (open) PRs: 100
-  - Get the last commit from the 100 PRs: 100
-  - Get the first 100 labels from each PR: 100x100 = 10000
-  - Total: 10200/100 = 102. This is the _max_ if you have 100 open PRs and 100 labels on each PR.
+Ref the above, here are some examples of running `check` against large repositories and the cost of doing so:
+- [concourse/concourse](https://github.com/concourse/concourse): 51 open pull requests at the time of testing. Cost 2.
+- [torvalds/linux](https://github.com/torvalds/linux): 305 open pull requests. Cost 8.
+- [kubernetes/kubernetes](https://github.com/kubernetes/kubernetes): 1072 open pull requests, and heavy use of leables. Cost: 22.
+
+For the other two operations the costing is a bit easier:
 - `get`: Fixed cost of 1. Fetches the pull request at the given commit.
 - `put`: Uses the V3 API and has a min cost of 1, +1 for each of `status`, `comment` and `comment_file` etc.
-
-E.g., typical use for a repository with 125 open pull requests, with on average 3 labels per PR will incur the following costs for every commit:
-
-- `check`: List PRs: 2, Latest commit: 125, Lables: 125x3=375. The total cost is then (2+125+375)/100=5.
-- `in`: 1 (fetch the pull request at the given commit ref)
-- `out`: 1 (set status on the commit)
-
-With a rate limit of 5000 per hour, it could handle ~700 commits between all of the 125 open pull requests in the span of that hour.
 
 ## Migrating
 
