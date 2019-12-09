@@ -30,7 +30,7 @@ Make sure to check out [#migrating](#migrating) to learn more.
 | `disable_ci_skip`           | No       | `true`                           | Disable ability to skip builds with `[ci skip]` and `[skip ci]` in commit message or pull request title.                                                                                                                                                                                   |
 | `skip_ssl_verification`     | No       | `true`                           | Disable SSL/TLS certificate validation on git and API clients. Use with care!                                                                                                                                                                                                              |
 | `disable_forks`             | No       | `true`                           | Disable triggering of the resource if the pull request's fork repository is different to the configured repository.                                                                                                                                                                        |
-| `required_review_approvals` | No       | `2`                              | Disable triggering of the resource if the pull request does not have at least `X` approved review(s).                                                                                                                                                                                      | 
+| `required_review_approvals` | No       | `2`                              | Disable triggering of the resource if the pull request does not have at least `X` approved review(s).                                                                                                                                                                                      |
 | `git_crypt_key`             | No       | `AEdJVENSWVBUS0VZAAAAA...`       | Base64 encoded git-crypt key. Setting this will unlock / decrypt the repository with git-crypt. To get the key simply execute `git-crypt export-key -- - | base64` in an encrypted repository.                                                                                             |
 | `base_branch`               | No       | `master`                         | Name of a branch. The pipeline will only trigger on pull requests against the specified branch.                                                                                                                                                                                            |
 | `labels`                    | No       | `["bug", "enhancement"]`         | The labels on the PR. The pipeline will only trigger on pull requests having at least one of the specified labels.                                                                                                                                                                         |
@@ -63,12 +63,12 @@ generate notifications over the webhook. So if you have a repository with little
 
 #### `get`
 
-| Parameter             | Required | Example  | Description                                                                        |
-|-----------------------|----------|----------|------------------------------------------------------------------------------------|
-| `skip_download`       | No       | `true`   | Use with `get_params` in a `put` step to do nothing on the implicit get.           |
-| `integration_tool`    | No       | `rebase` | The integration tool to use, `merge`, `rebase` or `checkout`. Defaults to `merge`. |
-| `git_depth`           | No       | `1`      | Shallow clone the repository using the `--depth` Git option                        |
-| `list_changed_files`  | No       | `true`   | Generate a list of changed files and save alongside metadata                       |
+| Parameter            | Required | Example  | Description                                                                        |
+|----------------------|----------|----------|------------------------------------------------------------------------------------|
+| `skip_download`      | No       | `true`   | Use with `get_params` in a `put` step to do nothing on the implicit get.           |
+| `integration_tool`   | No       | `rebase` | The integration tool to use, `merge`, `rebase` or `checkout`. Defaults to `merge`. |
+| `git_depth`          | No       | `1`      | Shallow clone the repository using the `--depth` Git option                        |
+| `list_changed_files` | No       | `true`   | Generate a list of changed files and save alongside metadata                       |
 
 Clones the base (e.g. `master` branch) at the latest commit, and merges the pull request at the specified commit
 into master. This ensures that we are both testing and setting status on the exact commit that was requested in
@@ -106,18 +106,18 @@ empty commit to the PR*.
 
 #### `put`
 
-| Parameter      | Required | Example                             | Description                                                                                                       |
-|----------------|----------|-------------------------------------|-------------------------------------------------------------------------------------------------------------------|
-| `path`              | Yes      | `pull-request`                      | The name given to the resource in a GET step.                                                                     |
-| `status`            | No       | `SUCCESS`                           | Set a status on a commit. One of `SUCCESS`, `PENDING`, `FAILURE` and `ERROR`.                                     |
-| `base_context`      | No       | `concourse-ci`                      | Base context (prefix) used for the status context. Defaults to `concourse-ci`.                                    |
-| `context`           | No       | `unit-test`                         | A context to use for the status, which is prefixed by `base_context`. Defaults to `status`.                       |
-| `comment`           | No       | `hello world!`                      | A comment to add to the pull request.                                                                             |
-| `comment_file`      | No       | `my-output/comment.txt`             | Path to file containing a comment to add to the pull request (e.g. output of `terraform plan`).                   |
-| `target_url`        | No       | `$ATC_EXTERNAL_URL/builds/$BUILD_ID` | The target URL for the status, where users are sent when clicking details (defaults to the Concourse build page). |
-| `description`       | No       | `Concourse CI build failed`         | The description status on the specified pull request.                                                             |
-| `description_file`  | No       | `my-output/description.txt`         | Path to file containing the description status to add to the pull request                                         |
-| `delete_previous_comments` | No       | `true`         |  Boolean. Previous comments made on the pull request by this resource will be deleted before making the new comment. Useful for removing outdated information. |
+| Parameter                  | Required | Example                              | Description                                                                                                                                                   |
+|----------------------------|----------|--------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `path`                     | Yes      | `pull-request`                       | The name given to the resource in a GET step.                                                                                                                 |
+| `status`                   | No       | `SUCCESS`                            | Set a status on a commit. One of `SUCCESS`, `PENDING`, `FAILURE` and `ERROR`.                                                                                 |
+| `base_context`             | No       | `concourse-ci`                       | Base context (prefix) used for the status context. Defaults to `concourse-ci`.                                                                                |
+| `context`                  | No       | `unit-test`                          | A context to use for the status, which is prefixed by `base_context`. Defaults to `status`.                                                                   |
+| `comment`                  | No       | `hello world!`                       | A comment to add to the pull request.                                                                                                                         |
+| `comment_file`             | No       | `my-output/comment.txt`              | Path to file containing a comment to add to the pull request (e.g. output of `terraform plan`).                                                               |
+| `target_url`               | No       | `$ATC_EXTERNAL_URL/builds/$BUILD_ID` | The target URL for the status, where users are sent when clicking details (defaults to the Concourse build page).                                             |
+| `description`              | No       | `Concourse CI build failed`          | The description status on the specified pull request.                                                                                                         |
+| `description_file`         | No       | `my-output/description.txt`          | Path to file containing the description status to add to the pull request                                                                                     |
+| `delete_previous_comments` | No       | `true`                               | Boolean. Previous comments made on the pull request by this resource will be deleted before making the new comment. Useful for removing outdated information. |
 
 Note that `comment`, `comment_file` and `target_url` will all expand environment variables, so in the examples above `$ATC_EXTERNAL_URL` will be replaced by the public URL of the Concourse ATCs.
 See https://concourse-ci.org/implementing-resource-types.html#resource-metadata for more details about metadata that is available via environment variables.
