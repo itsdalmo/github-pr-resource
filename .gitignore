@@ -4,5 +4,8 @@ build/*
 # Taskfile
 .task
 
+# Task installation in Travis
+bin/task
+
 # Editor
 .idea/
