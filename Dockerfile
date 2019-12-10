@@ -1,4 +1,4 @@
-FROM golang:1.12 as builder
+FROM golang:1.13 as builder
 ADD . /go/src/github.com/telia-oss/github-pr-resource
 WORKDIR /go/src/github.com/telia-oss/github-pr-resource
 RUN go get -u -v github.com/go-task/task/cmd/task && task build
