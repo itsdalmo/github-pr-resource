@@ -186,7 +186,7 @@ https://developer.github.com/v4/guides/resource-limitations/#calculating-a-rate-
 Ref the above, here are some examples of running `check` against large repositories and the cost of doing so:
 - [concourse/concourse](https://github.com/concourse/concourse): 51 open pull requests at the time of testing. Cost 2.
 - [torvalds/linux](https://github.com/torvalds/linux): 305 open pull requests. Cost 8.
-- [kubernetes/kubernetes](https://github.com/kubernetes/kubernetes): 1072 open pull requests, and heavy use of leables. Cost: 22.
+- [kubernetes/kubernetes](https://github.com/kubernetes/kubernetes): 1072 open pull requests. Cost: 22.
 
 For the other two operations the costing is a bit easier:
 - `get`: Fixed cost of 1. Fetches the pull request at the given commit.
