@@ -5,8 +5,6 @@ package e2e_test
 import (
 	"context"
 	"fmt"
-	"github.com/google/go-github/github"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -16,8 +14,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
 	resource "github.com/telia-oss/github-pr-resource"
+
+	"github.com/google/go-github/v28/github"
+	"github.com/shurcooL/githubv4"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var (
