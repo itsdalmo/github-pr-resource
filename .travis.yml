@@ -9,4 +9,5 @@ matrix:
 notifications:
   email: false
 script:
-- go get -u -v github.com/go-task/task/cmd/task && task ci
+- curl -sL https://taskfile.dev/install.sh | sh
+- ./bin/task ci
