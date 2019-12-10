@@ -194,16 +194,16 @@ func TestCheckAPICostE2E(t *testing.T) {
 		description string
 		source      resource.Source
 		version     resource.Version
-		ceiling     int
+		expected    int
 	}{
 		{
-			description: "cost does not exceed the defined ceiling",
+			description: "check has a known cost against ratelimit",
 			source: resource.Source{
 				Repository:  "itsdalmo/test-repository",
 				AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN"),
 			},
-			version: resource.Version{},
-			ceiling: 2,
+			version:  resource.Version{},
+			expected: 2,
 		},
 	}
 
@@ -219,7 +219,7 @@ func TestCheckAPICostE2E(t *testing.T) {
 			require.NoError(t, err)
 
 			cost := before - getRemainingRateLimit(t, githubClient.V4)
-			assert.Equal(t, tc.ceiling, cost, "cost against ratelimit is fixed")
+			assert.Equal(t, tc.expected, cost, "unexpected cost for check")
 		})
 	}
 }
