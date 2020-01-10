@@ -49,6 +49,28 @@ Loop:
 			continue
 		}
 
+		// Skip pull request if the HeadRefName does not match the head_branches glob specified in source
+		if request.Source.HeadBranches != "" {
+			matched, err := filepath.Match(request.Source.HeadBranches, p.PullRequestObject.HeadRefName)
+			if err != nil {
+				return nil, fmt.Errorf("failed to apply head branch filter: %s", err)
+			}
+			if !matched {
+				continue
+			}
+		}
+
+		// Skip pull request if the HeadRefName matches the ignore_head_branches glob specified in source
+		if request.Source.IgnoreHeadBranches != "" {
+			matched, err := filepath.Match(request.Source.IgnoreHeadBranches, p.PullRequestObject.HeadRefName)
+			if err != nil {
+				return nil, fmt.Errorf("failed to apply ignore head branch filter: %s", err)
+			}
+			if matched {
+				continue
+			}
+		}
+
 		// Filter out pull request if it does not contain at least one of the desired labels
 		if len(request.Source.Labels) > 0 {
 			labelFound := false
