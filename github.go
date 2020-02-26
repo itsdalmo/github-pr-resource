@@ -31,10 +31,11 @@ type Github interface {
 
 // GithubClient for handling requests to the Github V3 and V4 APIs.
 type GithubClient struct {
-	V3         *github.Client
-	V4         *githubv4.Client
-	Repository string
-	Owner      string
+	V3            *github.Client
+	V4            *githubv4.Client
+	Repository    string
+	Owner         string
+	StatusContext string
 }
 
 // NewGithubClient ...
@@ -90,10 +91,11 @@ func NewGithubClient(s *Source) (*GithubClient, error) {
 	}
 
 	return &GithubClient{
-		V3:         v3,
-		V4:         v4,
-		Owner:      owner,
-		Repository: repository,
+		V3:            v3,
+		V4:            v4,
+		Owner:         owner,
+		Repository:    repository,
+		StatusContext: s.StatusContext,
 	}, nil
 }
 
@@ -133,14 +135,15 @@ func (m *GithubClient) ListPullRequests(prStates []githubv4.PullRequestState) ([
 	}
 
 	vars := map[string]interface{}{
-		"repositoryOwner": githubv4.String(m.Owner),
-		"repositoryName":  githubv4.String(m.Repository),
-		"prFirst":         githubv4.Int(100),
-		"prStates":        prStates,
-		"prCursor":        (*githubv4.String)(nil),
-		"commitsLast":     githubv4.Int(1),
-		"prReviewStates":  []githubv4.PullRequestReviewState{githubv4.PullRequestReviewStateApproved},
-		"labelsFirst":     githubv4.Int(100),
+		"repositoryOwner":   githubv4.String(m.Owner),
+		"repositoryName":    githubv4.String(m.Repository),
+		"statusContextName": githubv4.String(m.StatusContext),
+		"prFirst":           githubv4.Int(100),
+		"prStates":          prStates,
+		"prCursor":          (*githubv4.String)(nil),
+		"commitsLast":       githubv4.Int(1),
+		"prReviewStates":    []githubv4.PullRequestReviewState{githubv4.PullRequestReviewStateApproved},
+		"labelsFirst":       githubv4.Int(100),
 	}
 
 	var response []*PullRequest
@@ -160,6 +163,7 @@ func (m *GithubClient) ListPullRequests(prStates []githubv4.PullRequestState) ([
 					Tip:                 c.Node.Commit,
 					ApprovedReviewCount: p.Node.Reviews.TotalCount,
 					Labels:              labels,
+					HasStatus:           c.Node.Commit.StatusObject.StatusContextObject.Context == (*githubv4.String)(nil),
 				})
 			}
 		}
