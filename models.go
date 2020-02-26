@@ -144,19 +144,11 @@ type CommitObject struct {
 		}
 		Email string
 	}
-	StatusObject
-}
-
-// StatusObject represents the GraphQL status object.
-// https://developer.github.com/v4/object/commit/
-type StatusObject struct {
-	StatusContextObject `graphql:"context(name:$statusContextName)"`
-}
-
-// StatusContextObject represents the GraphQL status context object.
-// https://developer.github.com/v4/object/statuscontext/
-type StatusContextObject struct {
-	Context *githubv4.String
+	Status struct {
+		Context struct {
+			Context *githubv4.String
+		} `graphql:"context(name:$statusContextName)"`
+	}
 }
 
 // ChangedFileObject represents the GraphQL FilesChanged node.
