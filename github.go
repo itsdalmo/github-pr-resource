@@ -113,7 +113,10 @@ func (m *GithubClient) ListPullRequests(prStates []githubv4.PullRequestState) ([
 						Commits struct {
 							Edges []struct {
 								Node struct {
-									Commit CommitObject
+									Commit struct {
+										CommitObject
+										Status StatusObject
+									}
 								}
 							}
 						} `graphql:"commits(last:$commitsLast)"`
@@ -160,7 +163,7 @@ func (m *GithubClient) ListPullRequests(prStates []githubv4.PullRequestState) ([
 			for _, c := range p.Node.Commits.Edges {
 				response = append(response, &PullRequest{
 					PullRequestObject:   p.Node.PullRequestObject,
-					Tip:                 c.Node.Commit,
+					Tip:                 c.Node.Commit.CommitObject,
 					ApprovedReviewCount: p.Node.Reviews.TotalCount,
 					Labels:              labels,
 					HasStatus:           !(c.Node.Commit.Status.Context.Context == nil),
