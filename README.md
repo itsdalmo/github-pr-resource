@@ -25,12 +25,12 @@ Make sure to check out [#migrating](#migrating) to learn more.
 | `access_token`              | Yes      |                                  | A Github Access Token with repository access (required for setting status on commits). N.B. If you want github-pr-resource to work with a private repository. Set `repo:full` permissions on the access token you create on GitHub. If it is a public repository, `repo:status` is enough. |
 | `v3_endpoint`               | No       | `https://api.github.com`         | Endpoint to use for the V3 Github API (Restful).                                                                                                                                                                                                                                           |
 | `v4_endpoint`               | No       | `https://api.github.com/graphql` | Endpoint to use for the V4 Github API (Graphql).                                                                                                                                                                                                                                           |
-| `paths`                     | No       | `terraform/*/*.tf`               | Only produce new versions if the PR includes changes to files that match one or more glob patterns or prefixes.                                                                                                                                                                            |
-| `ignore_paths`              | No       | `.ci/`                           | Inverse of the above. Pattern syntax is documented in [filepath.Match](https://golang.org/pkg/path/filepath/#Match), or a path prefix can be specified (e.g. `.ci/` will match everything in the `.ci` directory).                                                                         |
+| `paths`                     | No       | `["terraform/*/*.tf"]`               | Only produce new versions if the PR includes changes to files that match one or more glob patterns or prefixes.                                                                                                                                                                            |
+| `ignore_paths`              | No       | `[".ci/"]`                           | Inverse of the above. Pattern syntax is documented in [filepath.Match](https://golang.org/pkg/path/filepath/#Match), or a path prefix can be specified (e.g. `.ci/` will match everything in the `.ci` directory).                                                                         |
 | `disable_ci_skip`           | No       | `true`                           | Disable ability to skip builds with `[ci skip]` and `[skip ci]` in commit message or pull request title.                                                                                                                                                                                   |
 | `skip_ssl_verification`     | No       | `true`                           | Disable SSL/TLS certificate validation on git and API clients. Use with care!                                                                                                                                                                                                              |
 | `disable_forks`             | No       | `true`                           | Disable triggering of the resource if the pull request's fork repository is different to the configured repository.                                                                                                                                                                        |
-| `required_review_approvals` | No       | `2`                              | Disable triggering of the resource if the pull request does not have at least `X` approved review(s).                                                                                                                                                                                      | 
+| `required_review_approvals` | No       | `2`                              | Disable triggering of the resource if the pull request does not have at least `X` approved review(s).                                                                                                                                                                                      |
 | `git_crypt_key`             | No       | `AEdJVENSWVBUS0VZAAAAA...`       | Base64 encoded git-crypt key. Setting this will unlock / decrypt the repository with git-crypt. To get the key simply execute `git-crypt export-key -- - | base64` in an encrypted repository.                                                                                             |
 | `base_branch`               | No       | `master`                         | Name of a branch. The pipeline will only trigger on pull requests against the specified branch.                                                                                                                                                                                            |
 | `labels`                    | No       | `["bug", "enhancement"]`         | The labels on the PR. The pipeline will only trigger on pull requests having at least one of the specified labels.                                                                                                                                                                         |
@@ -63,12 +63,12 @@ generate notifications over the webhook. So if you have a repository with little
 
 #### `get`
 
-| Parameter             | Required | Example  | Description                                                                        |
-|-----------------------|----------|----------|------------------------------------------------------------------------------------|
-| `skip_download`       | No       | `true`   | Use with `get_params` in a `put` step to do nothing on the implicit get.           |
-| `integration_tool`    | No       | `rebase` | The integration tool to use, `merge`, `rebase` or `checkout`. Defaults to `merge`. |
-| `git_depth`           | No       | `1`      | Shallow clone the repository using the `--depth` Git option                        |
-| `list_changed_files`  | No       | `true`   | Generate a list of changed files and save alongside metadata                       |
+| Parameter            | Required | Example  | Description                                                                        |
+|----------------------|----------|----------|------------------------------------------------------------------------------------|
+| `skip_download`      | No       | `true`   | Use with `get_params` in a `put` step to do nothing on the implicit get.           |
+| `integration_tool`   | No       | `rebase` | The integration tool to use, `merge`, `rebase` or `checkout`. Defaults to `merge`. |
+| `git_depth`          | No       | `1`      | Shallow clone the repository using the `--depth` Git option                        |
+| `list_changed_files` | No       | `true`   | Generate a list of changed files and save alongside metadata                       |
 
 Clones the base (e.g. `master` branch) at the latest commit, and merges the pull request at the specified commit
 into master. This ensures that we are both testing and setting status on the exact commit that was requested in
@@ -80,7 +80,7 @@ requested version and the metadata emitted by `get` are available to your tasks 
 - `.git/resource/changed_files` (if enabled by `list_changed_files`)
 
 The information in `metadata.json` is also available as individual files in the `.git/resource` directory, e.g. the `base_sha`
-is available as `.git/resource/base_sha`. For a complete list of available (individual) metadata files, please check the code 
+is available as `.git/resource/base_sha`. For a complete list of available (individual) metadata files, please check the code
 [here](https://github.com/telia-oss/github-pr-resource/blob/master/in.go#L66).
 
 When specifying `skip_download` the pull request volume mounted to subsequent tasks will be empty, which is a problem
@@ -106,18 +106,18 @@ empty commit to the PR*.
 
 #### `put`
 
-| Parameter      | Required | Example                             | Description                                                                                                       |
-|----------------|----------|-------------------------------------|-------------------------------------------------------------------------------------------------------------------|
-| `path`              | Yes      | `pull-request`                      | The name given to the resource in a GET step.                                                                     |
-| `status`            | No       | `SUCCESS`                           | Set a status on a commit. One of `SUCCESS`, `PENDING`, `FAILURE` and `ERROR`.                                     |
-| `base_context`      | No       | `concourse-ci`                      | Base context (prefix) used for the status context. Defaults to `concourse-ci`.                                    |
-| `context`           | No       | `unit-test`                         | A context to use for the status, which is prefixed by `base_context`. Defaults to `status`.                       |
-| `comment`           | No       | `hello world!`                      | A comment to add to the pull request.                                                                             |
-| `comment_file`      | No       | `my-output/comment.txt`             | Path to file containing a comment to add to the pull request (e.g. output of `terraform plan`).                   |
-| `target_url`        | No       | `$ATC_EXTERNAL_URL/builds/$BUILD_ID` | The target URL for the status, where users are sent when clicking details (defaults to the Concourse build page). |
-| `description`       | No       | `Concourse CI build failed`         | The description status on the specified pull request.                                                             |
-| `description_file`  | No       | `my-output/description.txt`         | Path to file containing the description status to add to the pull request                                         |
-| `delete_previous_comments` | No       | `true`         |  Boolean. Previous comments made on the pull request by this resource will be deleted before making the new comment. Useful for removing outdated information. |
+| Parameter                  | Required | Example                              | Description                                                                                                                                                   |
+|----------------------------|----------|--------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `path`                     | Yes      | `pull-request`                       | The name given to the resource in a GET step.                                                                                                                 |
+| `status`                   | No       | `SUCCESS`                            | Set a status on a commit. One of `SUCCESS`, `PENDING`, `FAILURE` and `ERROR`.                                                                                 |
+| `base_context`             | No       | `concourse-ci`                       | Base context (prefix) used for the status context. Defaults to `concourse-ci`.                                                                                |
+| `context`                  | No       | `unit-test`                          | A context to use for the status, which is prefixed by `base_context`. Defaults to `status`.                                                                   |
+| `comment`                  | No       | `hello world!`                       | A comment to add to the pull request.                                                                                                                         |
+| `comment_file`             | No       | `my-output/comment.txt`              | Path to file containing a comment to add to the pull request (e.g. output of `terraform plan`).                                                               |
+| `target_url`               | No       | `$ATC_EXTERNAL_URL/builds/$BUILD_ID` | The target URL for the status, where users are sent when clicking details (defaults to the Concourse build page).                                             |
+| `description`              | No       | `Concourse CI build failed`          | The description status on the specified pull request.                                                                                                         |
+| `description_file`         | No       | `my-output/description.txt`          | Path to file containing the description status to add to the pull request                                                                                     |
+| `delete_previous_comments` | No       | `true`                               | Boolean. Previous comments made on the pull request by this resource will be deleted before making the new comment. Useful for removing outdated information. |
 
 Note that `comment`, `comment_file` and `target_url` will all expand environment variables, so in the examples above `$ATC_EXTERNAL_URL` will be replaced by the public URL of the Concourse ATCs.
 See https://concourse-ci.org/implementing-resource-types.html#resource-metadata for more details about metadata that is available via environment variables.
@@ -179,19 +179,18 @@ jobs:
 
 ## Costs
 
-The Github API(s) have a rate limit of 5000 requests per hour (per user). This resource will incur the following costs:
+The Github API(s) have a rate limit of 5000 requests per hour (per user). For the V3 API this essentially
+translates to 5000 requests, whereas for the V4 API (GraphQL)  the calculation is more involved:
+https://developer.github.com/v4/guides/resource-limitations/#calculating-a-rate-limit-score-before-running-the-call
 
-- `check`: Minimum 1, max 1 per 100th *open* pull request.
-- `in`: Fixed cost of 1. Fetches the pull request at the given commit.
-- `out`: Minimum 1, max 3 (1 for each of `status`, `comment` and `comment_file`).
+Ref the above, here are some examples of running `check` against large repositories and the cost of doing so:
+- [concourse/concourse](https://github.com/concourse/concourse): 51 open pull requests at the time of testing. Cost 2.
+- [torvalds/linux](https://github.com/torvalds/linux): 305 open pull requests. Cost 8.
+- [kubernetes/kubernetes](https://github.com/kubernetes/kubernetes): 1072 open pull requests. Cost: 22.
 
-E.g., typical use for a repository with 125 open pull requests will incur the following costs for every commit:
-
-- `check`: 2 (paginate 125 PR's with 100 per page)
-- `in`: 1 (fetch the pull request at the given commit ref)
-- `out`: 1 (set status on the commit)
-
-With a rate limit of 5000 per hour, it could handle 1250 commits between all of the 125 open pull requests in the span of that hour.
+For the other two operations the costing is a bit easier:
+- `get`: Fixed cost of 1. Fetches the pull request at the given commit.
+- `put`: Uses the V3 API and has a min cost of 1, +1 for each of `status`, `comment` and `comment_file` etc.
 
 ## Migrating
 

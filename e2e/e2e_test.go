@@ -5,8 +5,6 @@ package e2e_test
 import (
 	"context"
 	"fmt"
-	"github.com/google/go-github/github"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -16,8 +14,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
 	resource "github.com/telia-oss/github-pr-resource"
+
+	"github.com/google/go-github/v28/github"
+	"github.com/shurcooL/githubv4"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -185,6 +187,41 @@ func TestCheckE2E(t *testing.T) {
 			if assert.NoError(t, err) {
 				assert.Equal(t, tc.expected, output)
 			}
+		})
+	}
+}
+
+func TestCheckAPICostE2E(t *testing.T) {
+	tests := []struct {
+		description string
+		source      resource.Source
+		version     resource.Version
+		expected    int
+	}{
+		{
+			description: "check has a known cost against ratelimit",
+			source: resource.Source{
+				Repository:  "itsdalmo/test-repository",
+				AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN"),
+			},
+			version:  resource.Version{},
+			expected: 2,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			githubClient, err := resource.NewGithubClient(&tc.source)
+			require.NoError(t, err)
+
+			before := getRemainingRateLimit(t, githubClient.V4)
+
+			input := resource.CheckRequest{Source: tc.source, Version: tc.version}
+			_, err = resource.Check(input, githubClient)
+			require.NoError(t, err)
+
+			cost := before - getRemainingRateLimit(t, githubClient.V4)
+			assert.Equal(t, tc.expected, cost, "unexpected cost for check")
 		})
 	}
 }
@@ -436,7 +473,7 @@ func TestGetAndPutE2E(t *testing.T) {
 }
 
 func TestPutCommentsE2E(t *testing.T) {
-	owner := "rcoy-v"
+	owner := "itsdalmo"
 	repo := "github-pr-resource-e2e"
 
 	tests := []struct {
@@ -584,4 +621,16 @@ func readTestFile(t *testing.T, path string) string {
 		t.Fatalf("failed to read: %s: %s", path, err)
 	}
 	return string(b)
+}
+
+func getRemainingRateLimit(t *testing.T, c *githubv4.Client) int {
+	var query struct {
+		RateLimit struct {
+			Remaining int
+		}
+	}
+	if err := c.Query(context.TODO(), &query, nil); err != nil {
+		t.Fatalf("rate limit query: %s", err)
+	}
+	return query.RateLimit.Remaining
 }

@@ -49,7 +49,7 @@ func Put(request PutRequest, manager Github, inputDir string) (*PutResponse, err
 			description = string(content)
 		}
 
-		if err := manager.UpdateCommitStatus(version.Commit, p.BaseContext, p.Context, p.Status, os.ExpandEnv(p.TargetURL), description); err != nil {
+		if err := manager.UpdateCommitStatus(version.Commit, p.BaseContext, p.Context, p.Status, safeExpandEnv(p.TargetURL), description); err != nil {
 			return nil, fmt.Errorf("failed to set status: %s", err)
 		}
 	}
@@ -64,7 +64,7 @@ func Put(request PutRequest, manager Github, inputDir string) (*PutResponse, err
 
 	// Set comment if specified
 	if p := request.Params; p.Comment != "" {
-		err = manager.PostComment(version.PR, os.ExpandEnv(p.Comment))
+		err = manager.PostComment(version.PR, safeExpandEnv(p.Comment))
 		if err != nil {
 			return nil, fmt.Errorf("failed to post comment: %s", err)
 		}
@@ -78,7 +78,7 @@ func Put(request PutRequest, manager Github, inputDir string) (*PutResponse, err
 		}
 		comment := string(content)
 		if comment != "" {
-			err = manager.PostComment(version.PR, os.ExpandEnv(comment))
+			err = manager.PostComment(version.PR, safeExpandEnv(comment))
 			if err != nil {
 				return nil, fmt.Errorf("failed to post comment: %s", err)
 			}
@@ -139,4 +139,14 @@ func (p *PutParameters) Validate() error {
 	}
 
 	return nil
+}
+
+func safeExpandEnv(s string) string {
+	return os.Expand(s, func(v string) string {
+		switch v {
+		case "BUILD_ID", "BUILD_NAME", "BUILD_JOB_NAME", "BUILD_PIPELINE_NAME", "BUILD_TEAM_NAME", "ATC_EXTERNAL_URL":
+			return os.Getenv(v)
+		}
+		return "$" + v
+	})
 }

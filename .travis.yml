@@ -3,10 +3,11 @@ sudo: false
 matrix:
   include:
   - os: osx
-    go: 1.12.x
+    go: 1.14.x
   - os: linux
-    go: 1.12.x
+    go: 1.14.x
 notifications:
   email: false
 script:
-- go get -u -v github.com/go-task/task/cmd/task && task ci
+- curl -sL https://taskfile.dev/install.sh | sh
+- ./bin/task ci

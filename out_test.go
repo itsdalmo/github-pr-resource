@@ -220,8 +220,8 @@ func TestPut(t *testing.T) {
 func TestVariableSubstitution(t *testing.T) {
 
 	var (
-		variableName  = "EXAMPLE_VARIABLE"
-		variableValue = "value"
+		variableName  = "BUILD_JOB_NAME"
+		variableValue = "my-job"
 		variableURL   = "https://concourse-ci.org/"
 	)
 
@@ -270,6 +270,24 @@ func TestVariableSubstitution(t *testing.T) {
 			},
 			expectedTargetURL: fmt.Sprintf("%s%s", variableURL, variableValue),
 			pullRequest:       createTestPR(1, "master", false, false, 0, nil),
+		},
+
+		{
+			description: "we do not substitute variables other then concourse build metadata",
+			source: resource.Source{
+				Repository:  "itsdalmo/test-repository",
+				AccessToken: "oauthtoken",
+			},
+			version: resource.Version{
+				PR:            "pr1",
+				Commit:        "commit1",
+				CommittedDate: time.Time{},
+			},
+			parameters: resource.PutParameters{
+				Comment: "$THIS_IS_NOT_SUBSTITUTED",
+			},
+			expectedComment: "$THIS_IS_NOT_SUBSTITUTED",
+			pullRequest:     createTestPR(1, "master", false, false, 0, nil),
 		},
 	}
 
