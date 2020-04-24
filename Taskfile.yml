@@ -1,8 +1,5 @@
 version: '2'
 
-env:
-  GO111MODULE: on
-
 vars:
   BUILD_DIR: build
   DOCKER_REPO: teliaoss/github-pr-resource
