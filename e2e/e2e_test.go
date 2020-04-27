@@ -471,6 +471,81 @@ func TestGetAndPutE2E(t *testing.T) {
 	}
 }
 
+func TestGetSubmodules(t *testing.T) {
+	tests := []struct {
+		description   string
+		source        resource.Source
+		version       resource.Version
+		getParameters resource.GetParameters
+		expectedFiles []string
+	}{
+		{
+			description: "get works with submodules",
+			source: resource.Source{
+				Repository:  "itsdalmo/test-repository-active",
+				AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN"),
+			},
+			version: resource.Version{
+				PR:     "4",
+				Commit: "49398613d1f23d14518aadf6023cddba5db649ee",
+			},
+			getParameters: resource.GetParameters{
+				Submodules: true,
+			},
+			expectedFiles: []string{
+				".git",
+				"README.md",
+				"latest-test.txt",
+				"new-test.txt",
+				"pipeline.yml",
+				"test.txt",
+			},
+		},
+		{
+			description: "submodules are optional",
+			source: resource.Source{
+				Repository:  "itsdalmo/test-repository-active",
+				AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN"),
+			},
+			version: resource.Version{
+				PR:     "4",
+				Commit: "49398613d1f23d14518aadf6023cddba5db649ee",
+			},
+			getParameters: resource.GetParameters{
+				Submodules: false,
+			},
+			expectedFiles: []string{},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			// Create temporary directory
+			dir, err := ioutil.TempDir("", "github-pr-resource")
+			require.NoError(t, err)
+			defer os.RemoveAll(dir)
+
+			githubClient, err := resource.NewGithubClient(&tc.source)
+			require.NoError(t, err)
+
+			git, err := resource.NewGitClient(&tc.source, dir, ioutil.Discard)
+			require.NoError(t, err)
+
+			// Get (output and files)
+			getRequest := resource.GetRequest{Source: tc.source, Version: tc.version, Params: tc.getParameters}
+			_, err = resource.Get(getRequest, githubClient, git, dir)
+			require.NoError(t, err)
+
+			files, err := ioutil.ReadDir(filepath.Join(dir, "submodule"))
+			require.NoError(t, err)
+
+			for _, f := range files {
+				assert.Contains(t, tc.expectedFiles, f.Name())
+			}
+		})
+	}
+}
+
 func TestPutCommentsE2E(t *testing.T) {
 	var (
 		owner      = "itsdalmo"
