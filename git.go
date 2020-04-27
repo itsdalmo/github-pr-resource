@@ -71,10 +71,10 @@ func (g *GitClient) Init(branch string) error {
 	if err := g.command("git", "config", "user.email", "concourse@local").Run(); err != nil {
 		return fmt.Errorf("failed to configure git email: %s", err)
 	}
-	if err := g.command("git", "config", "--global", "url.https://x-oauth-basic@github.com/.insteadOf", "git@github.com:").Run(); err != nil {
+	if err := g.command("git", "config", "url.https://x-oauth-basic@github.com/.insteadOf", "git@github.com:").Run(); err != nil {
 		return fmt.Errorf("failed to configure github url: %s", err)
 	}
-	if err := g.command("git", "config", "--global", "url.https://.insteadOf", "git://").Run(); err != nil {
+	if err := g.command("git", "config", "url.https://.insteadOf", "git://").Run(); err != nil {
 		return fmt.Errorf("failed to configure github url: %s", err)
 	}
 	return nil
