@@ -478,7 +478,7 @@ func TestPutCommentsE2E(t *testing.T) {
 	)
 
 	tests := []struct {
-		description, branch                string
+		description                        string
 		source                             resource.Source
 		getParams                          resource.GetParameters
 		putParameters                      resource.PutParameters
@@ -486,7 +486,6 @@ func TestPutCommentsE2E(t *testing.T) {
 	}{
 		{
 			description: "delete previous comments removes old comments and makes new one",
-			branch:      "delete-previous-comments-remove-old-add-new",
 			source: resource.Source{
 				Repository:  fmt.Sprintf("%s/%s", owner, repository),
 				V3Endpoint:  "https://api.github.com/",
@@ -505,7 +504,6 @@ func TestPutCommentsE2E(t *testing.T) {
 		},
 		{
 			description: "delete previous comments removes all comments when no new comment",
-			branch:      "delete-previous-comments-remove-old",
 			source: resource.Source{
 				Repository:  fmt.Sprintf("%s/%s", owner, repository),
 				V3Endpoint:  "https://api.github.com/",
@@ -521,7 +519,6 @@ func TestPutCommentsE2E(t *testing.T) {
 		},
 		{
 			description: "delete previous comments should not delete comments when false",
-			branch:      "delete-previous-comments-false",
 			source: resource.Source{
 				Repository:  fmt.Sprintf("%s/%s", owner, repository),
 				V3Endpoint:  "https://api.github.com/",
@@ -556,7 +553,7 @@ func TestPutCommentsE2E(t *testing.T) {
 			pullRequest, _, err := githubClient.V3.PullRequests.Create(context.TODO(), owner, repository, &github.NewPullRequest{
 				Title: github.String(tc.description),
 				Base:  github.String("master"),
-				Head:  github.String(fmt.Sprintf("%s:%s", owner, tc.branch)),
+				Head:  github.String(fmt.Sprintf("%s:%s", owner, "test-comments")),
 			})
 			require.NoError(t, err)
 
