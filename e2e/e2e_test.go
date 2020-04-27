@@ -35,7 +35,6 @@ var (
 )
 
 func TestCheckE2E(t *testing.T) {
-
 	tests := []struct {
 		description string
 		source      resource.Source
@@ -473,8 +472,10 @@ func TestGetAndPutE2E(t *testing.T) {
 }
 
 func TestPutCommentsE2E(t *testing.T) {
-	owner := "itsdalmo"
-	repo := "github-pr-resource-e2e"
+	var (
+		owner      = "itsdalmo"
+		repository = "test-repository-active"
+	)
 
 	tests := []struct {
 		description, branch                string
@@ -487,7 +488,7 @@ func TestPutCommentsE2E(t *testing.T) {
 			description: "delete previous comments removes old comments and makes new one",
 			branch:      "delete-previous-comments-remove-old-add-new",
 			source: resource.Source{
-				Repository:  fmt.Sprintf("%s/%s", owner, repo),
+				Repository:  fmt.Sprintf("%s/%s", owner, repository),
 				V3Endpoint:  "https://api.github.com/",
 				V4Endpoint:  "https://api.github.com/graphql",
 				AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN"),
@@ -506,7 +507,7 @@ func TestPutCommentsE2E(t *testing.T) {
 			description: "delete previous comments removes all comments when no new comment",
 			branch:      "delete-previous-comments-remove-old",
 			source: resource.Source{
-				Repository:  fmt.Sprintf("%s/%s", owner, repo),
+				Repository:  fmt.Sprintf("%s/%s", owner, repository),
 				V3Endpoint:  "https://api.github.com/",
 				V4Endpoint:  "https://api.github.com/graphql",
 				AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN"),
@@ -522,7 +523,7 @@ func TestPutCommentsE2E(t *testing.T) {
 			description: "delete previous comments should not delete comments when false",
 			branch:      "delete-previous-comments-false",
 			source: resource.Source{
-				Repository:  fmt.Sprintf("%s/%s", owner, repo),
+				Repository:  fmt.Sprintf("%s/%s", owner, repository),
 				V3Endpoint:  "https://api.github.com/",
 				V4Endpoint:  "https://api.github.com/graphql",
 				AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN"),
@@ -552,7 +553,7 @@ func TestPutCommentsE2E(t *testing.T) {
 			git, err := resource.NewGitClient(&tc.source, dir, ioutil.Discard)
 			require.NoError(t, err)
 
-			pullRequest, _, err := githubClient.V3.PullRequests.Create(context.TODO(), owner, repo, &github.NewPullRequest{
+			pullRequest, _, err := githubClient.V3.PullRequests.Create(context.TODO(), owner, repository, &github.NewPullRequest{
 				Title: github.String(tc.description),
 				Base:  github.String("master"),
 				Head:  github.String(fmt.Sprintf("%s:%s", owner, tc.branch)),
@@ -560,7 +561,7 @@ func TestPutCommentsE2E(t *testing.T) {
 			require.NoError(t, err)
 
 			for _, comment := range tc.previousComments {
-				_, _, err = githubClient.V3.Issues.CreateComment(context.TODO(), owner, repo, pullRequest.GetNumber(), &github.IssueComment{
+				_, _, err = githubClient.V3.Issues.CreateComment(context.TODO(), owner, repository, pullRequest.GetNumber(), &github.IssueComment{
 					Body: github.String(comment),
 				})
 				require.NoError(t, err)
@@ -581,7 +582,7 @@ func TestPutCommentsE2E(t *testing.T) {
 			_, err = resource.Put(putRequest, githubClient, dir)
 			require.NoError(t, err)
 
-			comments, _, err := githubClient.V3.Issues.ListComments(context.TODO(), owner, repo, pullRequest.GetNumber(), nil)
+			comments, _, err := githubClient.V3.Issues.ListComments(context.TODO(), owner, repository, pullRequest.GetNumber(), nil)
 			require.NoError(t, err)
 
 			require.Len(t, comments, len(tc.expectedComments))
@@ -589,7 +590,7 @@ func TestPutCommentsE2E(t *testing.T) {
 				require.Equal(t, tc.expectedComments[index], comment.GetBody())
 			}
 
-			_, _, err = githubClient.V3.PullRequests.Edit(context.TODO(), owner, repo, pullRequest.GetNumber(), &github.PullRequest{
+			_, _, err = githubClient.V3.PullRequests.Edit(context.TODO(), owner, repository, pullRequest.GetNumber(), &github.PullRequest{
 				State: github.String("closed"),
 			})
 			require.NoError(t, err)
