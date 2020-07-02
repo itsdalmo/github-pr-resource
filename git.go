@@ -62,7 +62,7 @@ func (g *GitClient) Init(branch string) error {
 	if err := g.command("git", "init").Run(); err != nil {
 		return fmt.Errorf("init failed: %s", err)
 	}
-	if err := g.command("git", "checkout", "-b", branch).Run(); err != nil {
+	if err := g.command("git", "checkout", "-f", "-b", branch).Run(); err != nil {
 		return fmt.Errorf("checkout to '%s' failed: %s", branch, err)
 	}
 	if err := g.command("git", "config", "user.name", "concourse-ci").Run(); err != nil {
@@ -151,7 +151,7 @@ func (g *GitClient) Fetch(uri string, prNumber int, depth int, submodules bool) 
 
 // CheckOut
 func (g *GitClient) Checkout(branch, sha string, submodules bool) error {
-	if err := g.command("git", "checkout", "-b", branch, sha).Run(); err != nil {
+	if err := g.command("git", "checkout", "-f", "-b", branch, sha).Run(); err != nil {
 		return fmt.Errorf("checkout failed: %s", err)
 	}
 
