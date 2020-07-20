@@ -87,8 +87,7 @@ is available as `.git/resource/base_sha`. For a complete list of available (indi
 When specifying `skip_download` the pull request volume mounted to subsequent tasks will be empty, which is a problem
 when you set e.g. the pending status before running the actual tests. The workaround for this is to use an alias for
 the `put` (see https://github.com/telia-oss/github-pr-resource/issues/32 for more details).
-
-git-crypt encrypted repositories will automatically be decrypted when the `git_crypt_key` is set in the source configuration.
+Example here:
 
 ```yaml
 put: update-status <-- Use an alias for the pull-request resource
@@ -98,6 +97,8 @@ params:
     status: pending
 get_params: {skip_download: true}
 ```
+
+git-crypt encrypted repositories will automatically be decrypted when the `git_crypt_key` is set in the source configuration.
 
 Note that, should you retrigger a build in the hopes of testing the last commit to a PR against a newer version of
 the base, Concourse will reuse the volume (i.e. not trigger a new `get`) if it still exists, which can produce
