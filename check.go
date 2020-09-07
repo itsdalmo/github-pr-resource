@@ -77,6 +77,19 @@ Loop:
 			}
 		}
 
+		if len(request.Source.IgnorePaths) > 0 {
+			for _, pattern := range request.Source.IgnorePaths {
+				files, err = FilterIgnorePath(files, pattern)
+				if err != nil {
+					return nil, fmt.Errorf("ignore path match failed: %s", err)
+				}
+			}
+			// If all modified files are ignored, we should continue the loop
+			if len(files) == 0 {
+				continue Loop
+			}
+		}
+
 		// Skip version if no files match the specified paths.
 		if len(request.Source.Paths) > 0 {
 			var wanted []string
@@ -92,19 +105,6 @@ Loop:
 			}
 		}
 
-		// Skip version if all files are ignored.
-		if len(request.Source.IgnorePaths) > 0 {
-			wanted := files
-			for _, pattern := range request.Source.IgnorePaths {
-				wanted, err = FilterIgnorePath(wanted, pattern)
-				if err != nil {
-					return nil, fmt.Errorf("ignore path match failed: %s", err)
-				}
-			}
-			if len(wanted) == 0 {
-				continue Loop
-			}
-		}
 		response = append(response, NewVersion(p))
 	}
 
@@ -128,7 +128,8 @@ func ContainsSkipCI(s string) bool {
 	return re.MatchString(s)
 }
 
-// FilterIgnorePath ...
+// FilterIgnorePath returns a list of filepaths that do not match the file
+// path pattern, and are not sub-paths of the pattern.
 func FilterIgnorePath(files []string, pattern string) ([]string, error) {
 	var out []string
 	for _, file := range files {

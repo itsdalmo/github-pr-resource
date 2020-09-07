@@ -22,6 +22,19 @@ var (
 	}
 )
 
+// createGoodTestPRCount creates a slice of pull requests that won't be skipped
+// over in Check test steps. The var testPullRequests contains pull requests that
+// will be skipped and cause irregular testing behaviour if used as an input.
+func createGoodTestPRWithCount(count int) []*resource.PullRequest {
+	var p []*resource.PullRequest
+
+	for i := 0; i <= count-1; i++ {
+		p = append(p, createTestPR(i, "master", false, false, 0, nil))
+	}
+
+	return p
+}
+
 func TestCheck(t *testing.T) {
 	tests := []struct {
 		description  string
@@ -98,17 +111,35 @@ func TestCheck(t *testing.T) {
 			source: resource.Source{
 				Repository:  "itsdalmo/test-repository",
 				AccessToken: "oauthtoken",
-				IgnorePaths: []string{"*.md", "*.yml"},
+				IgnorePaths: []string{"*.md", "*.yml", "terraform/*/*/*.tf", "terraform/*/*.tf"},
 			},
 			version:      resource.NewVersion(testPullRequests[3]),
-			pullRequests: testPullRequests,
+			pullRequests: createGoodTestPRWithCount(3),
 			files: [][]string{
 				{"README.md", "travis.yml"},
 				{"terraform/modules/ecs/main.tf", "README.md"},
 				{"terraform/modules/variables.tf", "travis.yml"},
 			},
 			expected: resource.CheckResponse{
-				resource.NewVersion(testPullRequests[2]),
+				resource.NewVersion(testPullRequests[3]),
+			},
+		},
+
+		{
+			description: "check will not create a new version with partial path matches",
+			source: resource.Source{
+				Repository:  "itsdalmo/test-repository",
+				AccessToken: "oauthtoken",
+				Paths:       []string{"application-a/"},
+				IgnorePaths: []string{"application-a/helm/"},
+			},
+			version:      resource.NewVersion(testPullRequests[3]),
+			pullRequests: createGoodTestPRWithCount(2),
+			files: [][]string{
+				{"application-a/helm/application-a/values.yaml", "application-b/helm/application-b/values.yaml"},
+			},
+			expected: resource.CheckResponse{
+				resource.NewVersion(testPullRequests[3]),
 			},
 		},
 
