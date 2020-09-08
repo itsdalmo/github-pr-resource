@@ -308,6 +308,20 @@ func TestFilterPath(t *testing.T) {
 			},
 		},
 		{
+			description: "returns all files from wildcard pattern",
+			pattern: "**.tf",
+			files: []string{
+				"main.tf",
+				"terraform/path/places.tf",
+				"terraform/path/dogs/places.tf",
+			},
+			want:[]string{
+				"main.tf",
+				"terraform/path/places.tf",
+				"terraform/path/dogs/places.tf",
+			},
+		},
+		{
 			description: "works with wildcard",
 			pattern:     "test/*",
 			files: []string{
@@ -385,6 +399,17 @@ func TestFilterIgnorePath(t *testing.T) {
 			want: []string{
 				"file1.txt",
 			},
+		},
+		{
+			description: "excludes all nested matching files",
+			pattern: "**.txt",
+			files: []string{
+				"file1.txt",
+				"test/file2.txt",
+				"test/nested/file3.txt",
+			},
+			want: []string(nil),
+
 		},
 		{
 			description: "includes unmatched files",

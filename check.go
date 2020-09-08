@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+
+	"github.com/gobwas/glob"
 )
 
 // Check (business logic)
@@ -132,11 +134,12 @@ func ContainsSkipCI(s string) bool {
 // path pattern, and are not sub-paths of the pattern.
 func FilterIgnorePath(files []string, pattern string) ([]string, error) {
 	var out []string
+	g, err := glob.Compile(pattern, '/')
+	if err != nil {
+		return nil, err
+	}
 	for _, file := range files {
-		match, err := filepath.Match(pattern, file)
-		if err != nil {
-			return nil, err
-		}
+		match := g.Match(file)
 		if !match && !IsInsidePath(pattern, file) {
 			out = append(out, file)
 		}
@@ -147,11 +150,12 @@ func FilterIgnorePath(files []string, pattern string) ([]string, error) {
 // FilterPath ...
 func FilterPath(files []string, pattern string) ([]string, error) {
 	var out []string
+	g, err := glob.Compile(pattern, '/')
+	if err != nil {
+		return nil, err
+	}
 	for _, file := range files {
-		match, err := filepath.Match(pattern, file)
-		if err != nil {
-			return nil, err
-		}
+		match := g.Match(file)
 		if match || IsInsidePath(pattern, file) {
 			out = append(out, file)
 		}
