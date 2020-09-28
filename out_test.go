@@ -34,7 +34,7 @@ func TestPut(t *testing.T) {
 				CommittedDate: time.Time{},
 			},
 			parameters:  resource.PutParameters{},
-			pullRequest: createTestPR(1, "master", false, false, 0, nil, githubv4.PullRequestStateOpen),
+			pullRequest: createTestPR(1, "master", false, false, 0, nil, false, githubv4.PullRequestStateOpen),
 		},
 
 		{
@@ -51,7 +51,7 @@ func TestPut(t *testing.T) {
 			parameters: resource.PutParameters{
 				Status: "success",
 			},
-			pullRequest: createTestPR(1, "master", false, false, 0, nil, githubv4.PullRequestStateOpen),
+			pullRequest: createTestPR(1, "master", false, false, 0, nil, false, githubv4.PullRequestStateOpen),
 		},
 
 		{
@@ -69,7 +69,7 @@ func TestPut(t *testing.T) {
 				Status:  "failure",
 				Context: "build",
 			},
-			pullRequest: createTestPR(1, "master", false, false, 0, nil, githubv4.PullRequestStateOpen),
+			pullRequest: createTestPR(1, "master", false, false, 0, nil, false, githubv4.PullRequestStateOpen),
 		},
 
 		{
@@ -88,7 +88,7 @@ func TestPut(t *testing.T) {
 				BaseContext: "concourse-ci-custom",
 				Context:     "build",
 			},
-			pullRequest: createTestPR(1, "master", false, false, 0, nil, githubv4.PullRequestStateOpen),
+			pullRequest: createTestPR(1, "master", false, false, 0, nil, false, githubv4.PullRequestStateOpen),
 		},
 
 		{
@@ -106,7 +106,7 @@ func TestPut(t *testing.T) {
 				Status:    "failure",
 				TargetURL: "https://targeturl.com/concourse",
 			},
-			pullRequest: createTestPR(1, "master", false, false, 0, nil, githubv4.PullRequestStateOpen),
+			pullRequest: createTestPR(1, "master", false, false, 0, nil, false, githubv4.PullRequestStateOpen),
 		},
 
 		{
@@ -124,7 +124,7 @@ func TestPut(t *testing.T) {
 				Status:      "failure",
 				Description: "Concourse CI build",
 			},
-			pullRequest: createTestPR(1, "master", false, false, 0, nil, githubv4.PullRequestStateOpen),
+			pullRequest: createTestPR(1, "master", false, false, 0, nil, false, githubv4.PullRequestStateOpen),
 		},
 
 		{
@@ -141,7 +141,7 @@ func TestPut(t *testing.T) {
 			parameters: resource.PutParameters{
 				Comment: "comment",
 			},
-			pullRequest: createTestPR(1, "master", false, false, 0, nil, githubv4.PullRequestStateOpen),
+			pullRequest: createTestPR(1, "master", false, false, 0, nil, false, githubv4.PullRequestStateOpen),
 		},
 
 		{
@@ -158,7 +158,7 @@ func TestPut(t *testing.T) {
 			parameters: resource.PutParameters{
 				DeletePreviousComments: true,
 			},
-			pullRequest: createTestPR(1, "master", false, false, 0, []string{}, githubv4.PullRequestStateOpen),
+			pullRequest: createTestPR(1, "master", false, false, 0, []string{}, false, githubv4.PullRequestStateOpen),
 		},
 	}
 
@@ -251,7 +251,7 @@ func TestVariableSubstitution(t *testing.T) {
 				Comment: fmt.Sprintf("$%s", variableName),
 			},
 			expectedComment: variableValue,
-			pullRequest:     createTestPR(1, "master", false, false, 0, nil, githubv4.PullRequestStateOpen),
+			pullRequest:     createTestPR(1, "master", false, false, 0, nil, false, githubv4.PullRequestStateOpen),
 		},
 
 		{
@@ -270,7 +270,7 @@ func TestVariableSubstitution(t *testing.T) {
 				TargetURL: fmt.Sprintf("%s$%s", variableURL, variableName),
 			},
 			expectedTargetURL: fmt.Sprintf("%s%s", variableURL, variableValue),
-			pullRequest:       createTestPR(1, "master", false, false, 0, nil, githubv4.PullRequestStateOpen),
+			pullRequest:       createTestPR(1, "master", false, false, 0, nil, false, githubv4.PullRequestStateOpen),
 		},
 
 		{
@@ -288,7 +288,7 @@ func TestVariableSubstitution(t *testing.T) {
 				Comment: "$THIS_IS_NOT_SUBSTITUTED",
 			},
 			expectedComment: "$THIS_IS_NOT_SUBSTITUTED",
-			pullRequest:     createTestPR(1, "master", false, false, 0, nil, githubv4.PullRequestStateOpen),
+			pullRequest:     createTestPR(1, "master", false, false, 0, nil, false, githubv4.PullRequestStateOpen),
 		},
 	}
 

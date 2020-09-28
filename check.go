@@ -84,6 +84,11 @@ Loop:
 			continue
 		}
 
+		// Filter out drafts.
+		if request.Source.IgnoreDrafts && p.IsDraft {
+			continue
+		}
+
 		// Filter pull request if it does not have the required number of approved review(s).
 		if p.ApprovedReviewCount < request.Source.RequiredReviewApprovals {
 			continue

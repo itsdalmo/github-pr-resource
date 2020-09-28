@@ -21,6 +21,7 @@ type Source struct {
 	DisableGitLFS           bool                        `json:"disable_git_lfs"`
 	SkipSSLVerification     bool                        `json:"skip_ssl_verification"`
 	DisableForks            bool                        `json:"disable_forks"`
+	IgnoreDrafts            bool                        `json:"ignore_drafts"`
 	GitCryptKey             string                      `json:"git_crypt_key"`
 	BaseBranch              string                      `json:"base_branch"`
 	RequiredReviewApprovals int                         `json:"required_review_approvals"`
@@ -109,6 +110,7 @@ type PullRequestObject struct {
 		URL string
 	}
 	IsCrossRepository bool
+	IsDraft           bool
 	State             githubv4.PullRequestState
 	ClosedAt          githubv4.DateTime
 	MergedAt          githubv4.DateTime

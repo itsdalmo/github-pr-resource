@@ -11,18 +11,18 @@ import (
 
 var (
 	testPullRequests = []*resource.PullRequest{
-		createTestPR(1, "master", true, false, 0, nil, githubv4.PullRequestStateOpen),
-		createTestPR(2, "master", false, false, 0, nil, githubv4.PullRequestStateOpen),
-		createTestPR(3, "master", false, false, 0, nil, githubv4.PullRequestStateOpen),
-		createTestPR(4, "master", false, false, 0, nil, githubv4.PullRequestStateOpen),
-		createTestPR(5, "master", false, true, 0, nil, githubv4.PullRequestStateOpen),
-		createTestPR(6, "master", false, false, 0, nil, githubv4.PullRequestStateOpen),
-		createTestPR(7, "develop", false, false, 0, []string{"enhancement"}, githubv4.PullRequestStateOpen),
-		createTestPR(8, "master", false, false, 1, []string{"wontfix"}, githubv4.PullRequestStateOpen),
-		createTestPR(9, "master", false, false, 0, nil, githubv4.PullRequestStateOpen),
-		createTestPR(10, "master", false, false, 0, nil, githubv4.PullRequestStateClosed),
-		createTestPR(11, "master", false, false, 0, nil, githubv4.PullRequestStateMerged),
-		createTestPR(12, "master", false, false, 0, nil, githubv4.PullRequestStateOpen),
+		createTestPR(1, "master", true, false, 0, nil, false, githubv4.PullRequestStateOpen),
+		createTestPR(2, "master", false, false, 0, nil, false, githubv4.PullRequestStateOpen),
+		createTestPR(3, "master", false, false, 0, nil, true, githubv4.PullRequestStateOpen),
+		createTestPR(4, "master", false, false, 0, nil, false, githubv4.PullRequestStateOpen),
+		createTestPR(5, "master", false, true, 0, nil, false, githubv4.PullRequestStateOpen),
+		createTestPR(6, "master", false, false, 0, nil, false, githubv4.PullRequestStateOpen),
+		createTestPR(7, "develop", false, false, 0, []string{"enhancement"}, false, githubv4.PullRequestStateOpen),
+		createTestPR(8, "master", false, false, 1, []string{"wontfix"}, false, githubv4.PullRequestStateOpen),
+		createTestPR(9, "master", false, false, 0, nil, false, githubv4.PullRequestStateOpen),
+		createTestPR(10, "master", false, false, 0, nil, false, githubv4.PullRequestStateClosed),
+		createTestPR(11, "master", false, false, 0, nil, false, githubv4.PullRequestStateMerged),
+		createTestPR(12, "master", false, false, 0, nil, false, githubv4.PullRequestStateOpen),
 	}
 )
 
@@ -127,6 +127,35 @@ func TestCheck(t *testing.T) {
 			pullRequests: testPullRequests,
 			expected: resource.CheckResponse{
 				resource.NewVersion(testPullRequests[0]),
+			},
+		},
+
+		{
+			description: "check correctly ignores drafts when drafts are ignored",
+			source: resource.Source{
+				Repository:   "itsdalmo/test-repository",
+				AccessToken:  "oauthtoken",
+				IgnoreDrafts: true,
+			},
+			version:      resource.NewVersion(testPullRequests[3]),
+			pullRequests: testPullRequests,
+			expected: resource.CheckResponse{
+				resource.NewVersion(testPullRequests[1]),
+			},
+		},
+
+		{
+			description: "check does not ignore drafts when drafts are not ignored",
+			source: resource.Source{
+				Repository:   "itsdalmo/test-repository",
+				AccessToken:  "oauthtoken",
+				IgnoreDrafts: false,
+			},
+			version:      resource.NewVersion(testPullRequests[3]),
+			pullRequests: testPullRequests,
+			expected: resource.CheckResponse{
+				resource.NewVersion(testPullRequests[2]),
+				resource.NewVersion(testPullRequests[1]),
 			},
 		},
 
