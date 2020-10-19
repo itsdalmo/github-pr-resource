@@ -17,12 +17,33 @@ Inspired by [the original][original-resource], with some important differences:
 
 Make sure to check out [#migrating](#migrating) to learn more.
 
-## Source Configuration
+## Configuration
+
+### Authentication
+You can either use a personal access token or let the resource run as a [Github App](https://developer.github.com/apps/).
+
+#### Personal access token
+Please set the `access_token`.
+If you want github-pr-resource to work with a private repository. Set `repo:full` permissions on the access token you create on GitHub. If it is a public repository, `repo:status` is enough.
+
+#### Github App
+This is useful when you are part of an organisation and do not want to share your personal access token with everyone else having access to your Secrets Manager.
+Please provide `app_id` and `private_key`.
+
+We need the following permissions:
+- Contents - Read-only => required
+- Pull-requests - Read-only => required
+- Pull-requests - Read & write => To write/delete comments on pull requests
+- Commit statuses - Read & write => To set a commit status
+
+### Source
 
 | Parameter                   | Required | Example                          | Description                                                                                                                                                                                                                                                                                |
 |-----------------------------|----------|----------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `repository`                | Yes      | `itsdalmo/test-repository`       | The repository to target.                                                                                                                                                                                                                                                                  |
-| `access_token`              | Yes      |                                  | A Github Access Token with repository access (required for setting status on commits). N.B. If you want github-pr-resource to work with a private repository. Set `repo:full` permissions on the access token you create on GitHub. If it is a public repository, `repo:status` is enough. |
+| `access_token`              | Auth     |                                  | A Github Access Token with repository access (required for setting status on commits).                                                                                                                                                                                                     |
+| `app_id`                    | Auth     | `69592`                          | The Github App app id can be found in the settings of your app.                                                                                                                                                                                                                            |
+| `private_key`               | Auth     | `-----BEGIN RSA PRIVATE KEY....` | The private key of your Github App as described [here](https://docs.github.com/en/developers/apps/authenticating-with-github-apps).                                                                                                                                           |
 | `v3_endpoint`               | No       | `https://api.github.com`         | Endpoint to use for the V3 Github API (Restful).                                                                                                                                                                                                                                           |
 | `v4_endpoint`               | No       | `https://api.github.com/graphql` | Endpoint to use for the V4 Github API (Graphql).                                                                                                                                                                                                                                           |
 | `paths`                     | No       | `["terraform/*/*.tf"]`               | Only produce new versions if the PR includes changes to files that match one or more glob patterns or prefixes.                                                                                                                                                                            |

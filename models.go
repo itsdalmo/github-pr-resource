@@ -12,6 +12,8 @@ import (
 type Source struct {
 	Repository              string   `json:"repository"`
 	AccessToken             string   `json:"access_token"`
+	AppId                   string   `json:"app_id"`
+	PrivateKey              string   `json:"private_key"`
 	V3Endpoint              string   `json:"v3_endpoint"`
 	V4Endpoint              string   `json:"v4_endpoint"`
 	Paths                   []string `json:"paths"`
@@ -27,8 +29,8 @@ type Source struct {
 
 // Validate the source configuration.
 func (s *Source) Validate() error {
-	if s.AccessToken == "" {
-		return errors.New("access_token must be set")
+	if s.AccessToken == "" && (s.AppId == "" || s.PrivateKey == "") {
+		return errors.New("access_token or app_id and private_key must be set")
 	}
 	if s.Repository == "" {
 		return errors.New("repository must be set")

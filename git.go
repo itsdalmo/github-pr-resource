@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Git interface for testing purposes.
@@ -31,8 +32,12 @@ func NewGitClient(source *Source, dir string, output io.Writer) (*GitClient, err
 	if source.SkipSSLVerification {
 		os.Setenv("GIT_SSL_NO_VERIFY", "true")
 	}
+	accessToken, err := GenerateAccessToken(source, time.Now())
+	if err != nil {
+		return nil, err
+	}
 	return &GitClient{
-		AccessToken: source.AccessToken,
+		AccessToken: accessToken,
 		Directory:   dir,
 		Output:      output,
 	}, nil

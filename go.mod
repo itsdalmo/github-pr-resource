@@ -12,6 +12,7 @@ require (
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	golang.org/x/tools v0.0.0-20200423205358-59e73619c742 // indirect
 	google.golang.org/appengine v1.6.6 // indirect
+	gopkg.in/square/go-jose.v2 v2.5.1
 )
 
 go 1.14

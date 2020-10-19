@@ -11,6 +11,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/go-github/v28/github"
 	"github.com/shurcooL/githubv4"
@@ -57,8 +58,12 @@ func NewGithubClient(s *Source) (*GithubClient, error) {
 		ctx = context.TODO()
 	}
 
+	accessToken, err := GenerateAccessToken(s, time.Now())
+	if err != nil {
+		return nil, err
+	}
 	client := oauth2.NewClient(ctx, oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: s.AccessToken},
+		&oauth2.Token{AccessToken: accessToken},
 	))
 
 	var v3 *github.Client
