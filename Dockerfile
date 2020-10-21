@@ -8,6 +8,7 @@ FROM alpine:3.11 as resource
 COPY --from=builder /go/src/github.com/telia-oss/github-pr-resource/build /opt/resource
 RUN apk add --update --no-cache \
     git \
+    git-lfs \
     openssh \
     && chmod +x /opt/resource/*
 COPY scripts/askpass.sh /usr/local/bin/askpass.sh

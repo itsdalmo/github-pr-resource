@@ -3,6 +3,7 @@ package resource_test
 import (
 	"testing"
 
+	"github.com/shurcooL/githubv4"
 	"github.com/stretchr/testify/assert"
 	resource "github.com/telia-oss/github-pr-resource"
 	"github.com/telia-oss/github-pr-resource/fakes"
@@ -10,15 +11,18 @@ import (
 
 var (
 	testPullRequests = []*resource.PullRequest{
-		createTestPR(1, "master", true, false, 0, nil),
-		createTestPR(2, "master", false, false, 0, nil),
-		createTestPR(3, "master", false, false, 0, nil),
-		createTestPR(4, "master", false, false, 0, nil),
-		createTestPR(5, "master", false, true, 0, nil),
-		createTestPR(6, "master", false, false, 0, nil),
-		createTestPR(7, "develop", false, false, 0, []string{"enhancement"}),
-		createTestPR(8, "master", false, false, 1, []string{"wontfix"}),
-		createTestPR(9, "master", false, false, 0, nil),
+		createTestPR(1, "master", true, false, 0, nil, false, githubv4.PullRequestStateOpen),
+		createTestPR(2, "master", false, false, 0, nil, false, githubv4.PullRequestStateOpen),
+		createTestPR(3, "master", false, false, 0, nil, true, githubv4.PullRequestStateOpen),
+		createTestPR(4, "master", false, false, 0, nil, false, githubv4.PullRequestStateOpen),
+		createTestPR(5, "master", false, true, 0, nil, false, githubv4.PullRequestStateOpen),
+		createTestPR(6, "master", false, false, 0, nil, false, githubv4.PullRequestStateOpen),
+		createTestPR(7, "develop", false, false, 0, []string{"enhancement"}, false, githubv4.PullRequestStateOpen),
+		createTestPR(8, "master", false, false, 1, []string{"wontfix"}, false, githubv4.PullRequestStateOpen),
+		createTestPR(9, "master", false, false, 0, nil, false, githubv4.PullRequestStateOpen),
+		createTestPR(10, "master", false, false, 0, nil, false, githubv4.PullRequestStateClosed),
+		createTestPR(11, "master", false, false, 0, nil, false, githubv4.PullRequestStateMerged),
+		createTestPR(12, "master", false, false, 0, nil, false, githubv4.PullRequestStateOpen),
 	}
 )
 
@@ -127,6 +131,35 @@ func TestCheck(t *testing.T) {
 		},
 
 		{
+			description: "check correctly ignores drafts when drafts are ignored",
+			source: resource.Source{
+				Repository:   "itsdalmo/test-repository",
+				AccessToken:  "oauthtoken",
+				IgnoreDrafts: true,
+			},
+			version:      resource.NewVersion(testPullRequests[3]),
+			pullRequests: testPullRequests,
+			expected: resource.CheckResponse{
+				resource.NewVersion(testPullRequests[1]),
+			},
+		},
+
+		{
+			description: "check does not ignore drafts when drafts are not ignored",
+			source: resource.Source{
+				Repository:   "itsdalmo/test-repository",
+				AccessToken:  "oauthtoken",
+				IgnoreDrafts: false,
+			},
+			version:      resource.NewVersion(testPullRequests[3]),
+			pullRequests: testPullRequests,
+			expected: resource.CheckResponse{
+				resource.NewVersion(testPullRequests[2]),
+				resource.NewVersion(testPullRequests[1]),
+			},
+		},
+
+		{
 			description: "check correctly ignores cross repo pull requests",
 			source: resource.Source{
 				Repository:   "itsdalmo/test-repository",
@@ -183,6 +216,50 @@ func TestCheck(t *testing.T) {
 			files:        [][]string{},
 			expected: resource.CheckResponse{
 				resource.NewVersion(testPullRequests[6]),
+			},
+		},
+
+		{
+			description: "check returns latest version from a PR with a single state filter",
+			source: resource.Source{
+				Repository:  "itsdalmo/test-repository",
+				AccessToken: "oauthtoken",
+				States:      []githubv4.PullRequestState{githubv4.PullRequestStateClosed},
+			},
+			version:      resource.Version{},
+			pullRequests: testPullRequests,
+			files:        [][]string{},
+			expected: resource.CheckResponse{
+				resource.NewVersion(testPullRequests[9]),
+			},
+		},
+
+		{
+			description: "check filters out versions from a PR which do not match the state filter",
+			source: resource.Source{
+				Repository:  "itsdalmo/test-repository",
+				AccessToken: "oauthtoken",
+				States:      []githubv4.PullRequestState{githubv4.PullRequestStateOpen},
+			},
+			version:      resource.Version{},
+			pullRequests: testPullRequests[9:11],
+			files:        [][]string{},
+			expected:     resource.CheckResponse(nil),
+		},
+
+		{
+			description: "check returns versions from a PR with multiple state filters",
+			source: resource.Source{
+				Repository:  "itsdalmo/test-repository",
+				AccessToken: "oauthtoken",
+				States:      []githubv4.PullRequestState{githubv4.PullRequestStateClosed, githubv4.PullRequestStateMerged},
+			},
+			version:      resource.NewVersion(testPullRequests[11]),
+			pullRequests: testPullRequests,
+			files:        [][]string{},
+			expected: resource.CheckResponse{
+				resource.NewVersion(testPullRequests[9]),
+				resource.NewVersion(testPullRequests[10]),
 			},
 		},
 	}

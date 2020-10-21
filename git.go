@@ -17,7 +17,7 @@ import (
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -o fakes/fake_git.go . Git
 type Git interface {
 	Init(string) error
-	Pull(string, string, int, bool) error
+	Pull(string, string, int, bool, bool) error
 	RevParse(string) (string, error)
 	Fetch(string, int, int, bool) error
 	Checkout(string, string, bool) error
@@ -30,6 +30,9 @@ type Git interface {
 func NewGitClient(source *Source, dir string, output io.Writer) (*GitClient, error) {
 	if source.SkipSSLVerification {
 		os.Setenv("GIT_SSL_NO_VERIFY", "true")
+	}
+	if source.DisableGitLFS {
+		os.Setenv("GIT_LFS_SKIP_SMUDGE", "true")
 	}
 	return &GitClient{
 		AccessToken: source.AccessToken,
@@ -81,15 +84,22 @@ func (g *GitClient) Init(branch string) error {
 }
 
 // Pull ...
-func (g *GitClient) Pull(uri, branch string, depth int, submodules bool) error {
+func (g *GitClient) Pull(uri, branch string, depth int, submodules bool, fetchTags bool) error {
 	endpoint, err := g.Endpoint(uri)
 	if err != nil {
 		return err
 	}
 
-	args := []string{"pull", endpoint + ".git", branch}
+	if err := g.command("git", "remote", "add", "origin", endpoint).Run(); err != nil {
+		return fmt.Errorf("setting 'origin' remote to '%s' failed: %s", endpoint, err)
+	}
+
+	args := []string{"pull", "origin", branch}
 	if depth > 0 {
 		args = append(args, "--depth", strconv.Itoa(depth))
+	}
+	if fetchTags {
+		args = append(args, "--tags")
 	}
 	if submodules {
 		args = append(args, "--recurse-submodules")
