@@ -52,6 +52,7 @@ func Get(request GetRequest, github Github, git Git, outputDir string) (*GetResp
 	metadata.Add("author", pull.Tip.Author.User.Login)
 	metadata.Add("author_email", pull.Tip.Author.Email)
 	metadata.Add("state", string(pull.State))
+	metadata.Add("approved_review_count", strconv.Itoa(pull.ApprovedReviewCount))
 
 	// Write version and metadata for reuse in PUT
 	path := filepath.Join(outputDir, ".git", "resource")
