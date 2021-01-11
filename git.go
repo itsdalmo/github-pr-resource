@@ -216,7 +216,7 @@ func (g *GitClient) GitCryptUnlock(base64key string) error {
 		return fmt.Errorf("failed to decode git-crypt key")
 	}
 	keyPath := filepath.Join(keyDir, "git-crypt-key")
-	if err := ioutil.WriteFile(keyPath, decodedKey, 600); err != nil {
+	if err := ioutil.WriteFile(keyPath, decodedKey, os.FileMode(0600)); err != nil {
 		return fmt.Errorf("failed to write git-crypt key to file: %s", err)
 	}
 	if err := g.command("git-crypt", "unlock", keyPath).Run(); err != nil {
