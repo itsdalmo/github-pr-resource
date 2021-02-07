@@ -53,6 +53,12 @@ func Get(request GetRequest, github Github, git Git, outputDir string) (*GetResp
 	metadata.Add("author_email", pull.Tip.Author.Email)
 	metadata.Add("state", string(pull.State))
 
+	labelsJSON, err := serializeLabels(pull)
+	if err != nil {
+		return nil, fmt.Errorf("failed to serialize pull request labels: %s", err)
+	}
+	metadata.Add("labels", labelsJSON)
+
 	// Write version and metadata for reuse in PUT
 	path := filepath.Join(outputDir, ".git", "resource")
 	if err := os.MkdirAll(path, os.ModePerm); err != nil {
@@ -126,6 +132,18 @@ func Get(request GetRequest, github Github, git Git, outputDir string) (*GetResp
 		Version:  request.Version,
 		Metadata: metadata,
 	}, nil
+}
+
+func serializeLabels(p *PullRequest) (string, error) {
+	labels := []string{}
+	for _, label := range p.Labels {
+		labels = append(labels, label.Name)
+	}
+	serializedLabels, err := json.Marshal(labels)
+	if err != nil {
+		return "", err
+	}
+	return string(serializedLabels), nil
 }
 
 // GetParameters ...
