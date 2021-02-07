@@ -11,6 +11,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/go-github/v28/github"
 	"github.com/shurcooL/githubv4"
@@ -186,8 +187,13 @@ func (m *GithubClient) ListModifiedFiles(prNumber int) ([]string, error) {
 			prNumber,
 			opt,
 		)
+
 		if err != nil {
-			return nil, err
+			if rateLimited(err) {
+				continue
+			} else {
+				return nil, err
+			}
 		}
 		for _, f := range result {
 			files = append(files, *f.Filename)
@@ -207,15 +213,24 @@ func (m *GithubClient) PostComment(prNumber, comment string) error {
 		return fmt.Errorf("failed to convert pull request number to int: %s", err)
 	}
 
-	_, _, err = m.V3.Issues.CreateComment(
-		context.TODO(),
-		m.Owner,
-		m.Repository,
-		pr,
-		&github.IssueComment{
-			Body: github.String(comment),
-		},
-	)
+	for {
+		_, _, err = m.V3.Issues.CreateComment(
+			context.TODO(),
+			m.Owner,
+			m.Repository,
+			pr,
+			&github.IssueComment{
+				Body: github.String(comment),
+			},
+		)
+		if err != nil {
+			if rateLimited(err) {
+				continue
+			} else {
+				break
+			}
+		}
+	}
 	return err
 }
 
@@ -341,18 +356,30 @@ func (m *GithubClient) UpdateCommitStatus(commitRef, baseContext, statusContext,
 		description = fmt.Sprintf("Concourse CI build %s", status)
 	}
 
-	_, _, err := m.V3.Repositories.CreateStatus(
-		context.TODO(),
-		m.Owner,
-		m.Repository,
-		commitRef,
-		&github.RepoStatus{
-			State:       github.String(strings.ToLower(status)),
-			TargetURL:   github.String(targetURL),
-			Description: github.String(description),
-			Context:     github.String(path.Join(baseContext, statusContext)),
-		},
-	)
+	var err error
+	for {
+		_, _, err = m.V3.Repositories.CreateStatus(
+			context.TODO(),
+			m.Owner,
+			m.Repository,
+			commitRef,
+			&github.RepoStatus{
+				State:       github.String(strings.ToLower(status)),
+				TargetURL:   github.String(targetURL),
+				Description: github.String(description),
+				Context:     github.String(path.Join(baseContext, statusContext)),
+			},
+		)
+
+		if err != nil {
+			if rateLimited(err) {
+				continue
+			} else {
+				break
+			}
+		}
+
+	}
 	return err
 }
 
@@ -396,9 +423,15 @@ func (m *GithubClient) DeletePreviousComments(prNumber string) error {
 
 	for _, e := range getComments.Repository.PullRequest.Comments.Edges {
 		if e.Node.Author.Login == getComments.Viewer.Login {
-			_, err := m.V3.Issues.DeleteComment(context.TODO(), m.Owner, m.Repository, e.Node.DatabaseId)
-			if err != nil {
-				return err
+			for {
+				_, err := m.V3.Issues.DeleteComment(context.TODO(), m.Owner, m.Repository, e.Node.DatabaseId)
+				if err != nil {
+					if rateLimited(err) {
+						continue
+					} else {
+						return err
+					}
+				}
 			}
 		}
 	}
@@ -412,4 +445,25 @@ func parseRepository(s string) (string, string, error) {
 		return "", "", errors.New("malformed repository")
 	}
 	return parts[0], parts[1], nil
+}
+
+func rateLimited(err error) bool {
+	if err == nil {
+		return false
+	}
+	rerr, ok := err.(*github.RateLimitError)
+	if ok {
+		var d = rerr.Rate.Reset.Time.Sub(time.Now())
+		//hit rate limit, sleeping
+		time.Sleep(d)
+		return true
+	}
+	aerr, ok := err.(*github.AbuseRateLimitError)
+	if ok {
+		var d = aerr.GetRetryAfter()
+		//hit abuse mechanism, sleeping
+		time.Sleep(d)
+		return true
+	}
+	return false
 }
