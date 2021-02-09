@@ -173,6 +173,68 @@ func TestCheckE2E(t *testing.T) {
 				resource.Version{PR: targetPullRequestID, Commit: targetCommitID, CommittedDate: targetDateTime},
 			},
 		},
+
+		{
+			description: "check returns latest PR that matches the head branch filter",
+			source: resource.Source{
+				Repository:    "itsdalmo/test-repository",
+				AccessToken:   os.Getenv("GITHUB_ACCESS_TOKEN"),
+				V3Endpoint:    "https://api.github.com/",
+				V4Endpoint:    "https://api.github.com/graphql",
+				HeadBranches:  "my*",
+				DisableCISkip: true,
+			},
+			version: resource.Version{},
+			expected: resource.CheckResponse{
+				resource.Version{PR: targetPullRequestID, Commit: targetCommitID, CommittedDate: targetDateTime},
+			},
+		},
+
+		{
+			description: "check works when head branch filter doesn't match any PRs",
+			source: resource.Source{
+				Repository:    "itsdalmo/test-repository",
+				AccessToken:   os.Getenv("GITHUB_ACCESS_TOKEN"),
+				V3Endpoint:    "https://api.github.com/",
+				V4Endpoint:    "https://api.github.com/graphql",
+				HeadBranches:  "feature/*",
+				DisableCISkip: true,
+			},
+			version:  resource.Version{},
+			expected: resource.CheckResponse(nil),
+		},
+
+		{
+			description: "check returns latest PR that matches the ignore head branch filter",
+			source: resource.Source{
+				Repository:         "itsdalmo/test-repository",
+				AccessToken:        os.Getenv("GITHUB_ACCESS_TOKEN"),
+				V3Endpoint:         "https://api.github.com/",
+				V4Endpoint:         "https://api.github.com/graphql",
+				IgnoreHeadBranches: "test*",
+				DisableCISkip:      true,
+			},
+			version: resource.Version{},
+			expected: resource.CheckResponse{
+				resource.Version{PR: targetPullRequestID, Commit: targetCommitID, CommittedDate: targetDateTime},
+			},
+		},
+
+		{
+			description: "check works when ignore head branch filter doesn't match any PRs",
+			source: resource.Source{
+				Repository:         "itsdalmo/test-repository",
+				AccessToken:        os.Getenv("GITHUB_ACCESS_TOKEN"),
+				V3Endpoint:         "https://api.github.com/",
+				V4Endpoint:         "https://api.github.com/graphql",
+				IgnoreHeadBranches: "feature/*",
+				DisableCISkip:      true,
+			},
+			version: resource.Version{},
+			expected: resource.CheckResponse{
+				resource.Version{PR: developPullRequestID, Commit: developCommitID, CommittedDate: developDateTime},
+			},
+		},
 	}
 
 	for _, tc := range tests {

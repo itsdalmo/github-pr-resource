@@ -262,6 +262,36 @@ func TestCheck(t *testing.T) {
 				resource.NewVersion(testPullRequests[10]),
 			},
 		},
+
+		{
+			description: "check correctly ignores PRs that do not match the head branch filter",
+			source: resource.Source{
+				Repository:   "itsdalmo/test-repository",
+				AccessToken:  "oauthtoken",
+				HeadBranches: "pr8*",
+			},
+			version:      resource.Version{},
+			pullRequests: testPullRequests,
+			files:        [][]string{},
+			expected: resource.CheckResponse{
+				resource.NewVersion(testPullRequests[7]),
+			},
+		},
+
+		{
+			description: "check correctly ignores PRs that do match the ignore head branch filter",
+			source: resource.Source{
+				Repository:         "itsdalmo/test-repository",
+				AccessToken:        "oauthtoken",
+				IgnoreHeadBranches: "pr2*",
+			},
+			version:      resource.Version{},
+			pullRequests: testPullRequests,
+			files:        [][]string{},
+			expected: resource.CheckResponse{
+				resource.NewVersion(testPullRequests[2]),
+			},
+		},
 	}
 
 	for _, tc := range tests {
