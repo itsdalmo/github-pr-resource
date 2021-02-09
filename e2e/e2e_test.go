@@ -23,6 +23,9 @@ import (
 )
 
 var (
+	firstCommitID        = "23dc9f552bf989d1a4aeb65ce23351dee0ec9019"
+	firstPullRequestID   = "3"
+	firstDateTime        = time.Date(2018, time.May, 11, 7, 28, 56, 0, time.UTC)
 	targetCommitID       = "a5114f6ab89f4b736655642a11e8d15ce363d882"
 	targetPullRequestID  = "4"
 	targetDateTime       = time.Date(2018, time.May, 11, 8, 43, 48, 0, time.UTC)
@@ -54,25 +57,15 @@ func TestCheckE2E(t *testing.T) {
 		},
 
 		{
-			description: "check returns the previous version when its still latest",
+			description: "check returns all open PRs if there is a previous version",
 			source: resource.Source{
 				Repository:  "itsdalmo/test-repository",
 				AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN"),
 			},
 			version: resource.Version{PR: latestPullRequestID, Commit: latestCommitID, CommittedDate: latestDateTime},
 			expected: resource.CheckResponse{
-				resource.Version{PR: latestPullRequestID, Commit: latestCommitID, CommittedDate: latestDateTime},
-			},
-		},
-
-		{
-			description: "check returns all new versions since the last",
-			source: resource.Source{
-				Repository:  "itsdalmo/test-repository",
-				AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN"),
-			},
-			version: resource.Version{PR: targetPullRequestID, Commit: targetCommitID, CommittedDate: targetDateTime},
-			expected: resource.CheckResponse{
+				resource.Version{PR: firstPullRequestID, Commit: firstCommitID, CommittedDate: firstDateTime},
+				resource.Version{PR: targetPullRequestID, Commit: targetCommitID, CommittedDate: targetDateTime},
 				resource.Version{PR: latestPullRequestID, Commit: latestCommitID, CommittedDate: latestDateTime},
 			},
 		},
