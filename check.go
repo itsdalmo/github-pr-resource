@@ -45,7 +45,12 @@ Loop:
 		}
 
 		// Filter out commits that are too old.
-		if !p.UpdatedDate().Time.After(request.Version.CommittedDate) {
+		if request.Source.StatusContext == "" && !p.Tip.CommittedDate.Time.After(request.Version.CommittedDate) {
+			continue
+		}
+
+		// Filter out commits that already have a build status
+		if request.Source.StatusContext != "" && p.HasStatus {
 			continue
 		}
 
