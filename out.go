@@ -55,8 +55,8 @@ func Put(request PutRequest, manager Github, inputDir string) (*PutResponse, err
 	}
 
 	// Delete previous comments if specified
-	if request.Params.DeletePreviousComments {
-		err = manager.DeletePreviousComments(version.PR)
+	if p := request.Params; request.Params.DeletePreviousComments {
+		err = manager.DeletePreviousComments(version.PR, p.CommentTitle)
 		if err != nil {
 			return nil, fmt.Errorf("failed to delete previous comments: %s", err)
 		}
@@ -64,7 +64,7 @@ func Put(request PutRequest, manager Github, inputDir string) (*PutResponse, err
 
 	// Set comment if specified
 	if p := request.Params; p.Comment != "" {
-		err = manager.PostComment(version.PR, safeExpandEnv(p.Comment))
+		err = manager.PostComment(version.PR, safeExpandEnv(p.Comment), p.CommentTitle)
 		if err != nil {
 			return nil, fmt.Errorf("failed to post comment: %s", err)
 		}
@@ -78,7 +78,7 @@ func Put(request PutRequest, manager Github, inputDir string) (*PutResponse, err
 		}
 		comment := string(content)
 		if comment != "" {
-			err = manager.PostComment(version.PR, safeExpandEnv(comment))
+			err = manager.PostComment(version.PR, safeExpandEnv(comment), p.CommentTitle)
 			if err != nil {
 				return nil, fmt.Errorf("failed to post comment: %s", err)
 			}
@@ -113,6 +113,7 @@ type PutParameters struct {
 	Description            string `json:"description"`
 	Status                 string `json:"status"`
 	CommentFile            string `json:"comment_file"`
+	CommentTitle           string `json:"comment_title"`
 	Comment                string `json:"comment"`
 	DeletePreviousComments bool   `json:"delete_previous_comments"`
 }

@@ -22,11 +22,11 @@ import (
 type Github interface {
 	ListPullRequests([]githubv4.PullRequestState) ([]*PullRequest, error)
 	ListModifiedFiles(int) ([]string, error)
-	PostComment(string, string) error
+	PostComment(string, string, string) error
 	GetPullRequest(string, string) (*PullRequest, error)
 	GetChangedFiles(string, string) ([]ChangedFileObject, error)
 	UpdateCommitStatus(string, string, string, string, string, string) error
-	DeletePreviousComments(string) error
+	DeletePreviousComments(string, string) error
 }
 
 // GithubClient for handling requests to the Github V3 and V4 APIs.
@@ -201,7 +201,11 @@ func (m *GithubClient) ListModifiedFiles(prNumber int) ([]string, error) {
 }
 
 // PostComment to a pull request or issue.
-func (m *GithubClient) PostComment(prNumber, comment string) error {
+func (m *GithubClient) PostComment(prNumber, comment string, commentTitle string) error {
+	if commentTitle == "" {
+		commentTitle = "# Concourse CI\r\n"
+	}
+	comment = commentTitle + comment
 	pr, err := strconv.Atoi(prNumber)
 	if err != nil {
 		return fmt.Errorf("failed to convert pull request number to int: %s", err)
@@ -356,7 +360,11 @@ func (m *GithubClient) UpdateCommitStatus(commitRef, baseContext, statusContext,
 	return err
 }
 
-func (m *GithubClient) DeletePreviousComments(prNumber string) error {
+func (m *GithubClient) DeletePreviousComments(prNumber string, commentTitle string) error {
+	if commentTitle == "" {
+		commentTitle = "# Concourse CI\r\n"
+	}
+
 	pr, err := strconv.Atoi(prNumber)
 	if err != nil {
 		return fmt.Errorf("failed to convert pull request number to int: %s", err)
@@ -373,6 +381,7 @@ func (m *GithubClient) DeletePreviousComments(prNumber string) error {
 					Edges []struct {
 						Node struct {
 							DatabaseId int64
+							Body       string
 							Author     struct {
 								Login string
 							}
@@ -395,7 +404,7 @@ func (m *GithubClient) DeletePreviousComments(prNumber string) error {
 	}
 
 	for _, e := range getComments.Repository.PullRequest.Comments.Edges {
-		if e.Node.Author.Login == getComments.Viewer.Login {
+		if e.Node.Author.Login == getComments.Viewer.Login && strings.HasPrefix(e.Node.Body, commentTitle) {
 			_, err := m.V3.Issues.DeleteComment(context.TODO(), m.Owner, m.Repository, e.Node.DatabaseId)
 			if err != nil {
 				return err
