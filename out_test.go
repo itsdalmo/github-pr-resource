@@ -202,7 +202,7 @@ func TestPut(t *testing.T) {
 
 			if tc.parameters.Comment != "" {
 				if assert.Equal(t, 1, github.PostCommentCallCount()) {
-					pr, comment := github.PostCommentArgsForCall(0)
+					pr, comment, _ := github.PostCommentArgsForCall(0)
 					assert.Equal(t, tc.version.PR, pr)
 					assert.Equal(t, tc.parameters.Comment, comment)
 				}
@@ -210,7 +210,7 @@ func TestPut(t *testing.T) {
 
 			if tc.parameters.DeletePreviousComments {
 				if assert.Equal(t, 1, github.DeletePreviousCommentsCallCount()) {
-					pr := github.DeletePreviousCommentsArgsForCall(0)
+					pr, _ := github.DeletePreviousCommentsArgsForCall(0)
 					assert.Equal(t, tc.version.PR, pr)
 				}
 			}
@@ -227,13 +227,13 @@ func TestVariableSubstitution(t *testing.T) {
 	)
 
 	tests := []struct {
-		description       string
-		source            resource.Source
-		version           resource.Version
-		parameters        resource.PutParameters
-		expectedComment   string
-		expectedTargetURL string
-		pullRequest       *resource.PullRequest
+		description          string
+		source               resource.Source
+		version              resource.Version
+		parameters           resource.PutParameters
+		expectedComment      string
+		expectedTargetURL    string
+		pullRequest          *resource.PullRequest
 	}{
 
 		{
@@ -325,7 +325,7 @@ func TestVariableSubstitution(t *testing.T) {
 
 			if tc.parameters.Comment != "" {
 				if assert.Equal(t, 1, github.PostCommentCallCount()) {
-					_, comment := github.PostCommentArgsForCall(0)
+					_, comment, _ := github.PostCommentArgsForCall(0)
 					assert.Equal(t, tc.expectedComment, comment)
 				}
 			}

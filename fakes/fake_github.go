@@ -139,7 +139,7 @@ func (fake *FakeGithub) DeletePreviousCommentsCalls(stub func(string, string) er
 	fake.DeletePreviousCommentsStub = stub
 }
 
-func (fake *FakeGithub) DeletePreviousCommentsArgsForCall(i int) string {
+func (fake *FakeGithub) DeletePreviousCommentsArgsForCall(i int) (string, string) {
 	fake.deletePreviousCommentsMutex.RLock()
 	defer fake.deletePreviousCommentsMutex.RUnlock()
 	argsForCall := fake.deletePreviousCommentsArgsForCall[i]
