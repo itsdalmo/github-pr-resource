@@ -9,10 +9,11 @@ import (
 )
 
 type FakeGithub struct {
-	DeletePreviousCommentsStub        func(string) error
+	DeletePreviousCommentsStub        func(string, string) error
 	deletePreviousCommentsMutex       sync.RWMutex
 	deletePreviousCommentsArgsForCall []struct {
 		arg1 string
+		arg2 string
 	}
 	deletePreviousCommentsReturns struct {
 		result1 error
@@ -74,11 +75,12 @@ type FakeGithub struct {
 		result1 []*resource.PullRequest
 		result2 error
 	}
-	PostCommentStub        func(string, string) error
+	PostCommentStub        func(string, string, string) error
 	postCommentMutex       sync.RWMutex
 	postCommentArgsForCall []struct {
 		arg1 string
 		arg2 string
+		arg3 string
 	}
 	postCommentReturns struct {
 		result1 error
@@ -106,16 +108,17 @@ type FakeGithub struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeGithub) DeletePreviousComments(arg1 string) error {
+func (fake *FakeGithub) DeletePreviousComments(arg1 string, arg2 string) error {
 	fake.deletePreviousCommentsMutex.Lock()
 	ret, specificReturn := fake.deletePreviousCommentsReturnsOnCall[len(fake.deletePreviousCommentsArgsForCall)]
 	fake.deletePreviousCommentsArgsForCall = append(fake.deletePreviousCommentsArgsForCall, struct {
 		arg1 string
-	}{arg1})
-	fake.recordInvocation("DeletePreviousComments", []interface{}{arg1})
+		arg2 string
+	}{arg1, arg2})
+	fake.recordInvocation("DeletePreviousComments", []interface{}{arg1, arg2})
 	fake.deletePreviousCommentsMutex.Unlock()
 	if fake.DeletePreviousCommentsStub != nil {
-		return fake.DeletePreviousCommentsStub(arg1)
+		return fake.DeletePreviousCommentsStub(arg1, arg2)
 	}
 	if specificReturn {
 		return ret.result1
@@ -130,7 +133,7 @@ func (fake *FakeGithub) DeletePreviousCommentsCallCount() int {
 	return len(fake.deletePreviousCommentsArgsForCall)
 }
 
-func (fake *FakeGithub) DeletePreviousCommentsCalls(stub func(string) error) {
+func (fake *FakeGithub) DeletePreviousCommentsCalls(stub func(string, string) error) {
 	fake.deletePreviousCommentsMutex.Lock()
 	defer fake.deletePreviousCommentsMutex.Unlock()
 	fake.DeletePreviousCommentsStub = stub
@@ -140,7 +143,7 @@ func (fake *FakeGithub) DeletePreviousCommentsArgsForCall(i int) string {
 	fake.deletePreviousCommentsMutex.RLock()
 	defer fake.deletePreviousCommentsMutex.RUnlock()
 	argsForCall := fake.deletePreviousCommentsArgsForCall[i]
-	return argsForCall.arg1
+	return argsForCall.arg1, argsForCall.arg2
 }
 
 func (fake *FakeGithub) DeletePreviousCommentsReturns(result1 error) {
@@ -425,17 +428,18 @@ func (fake *FakeGithub) ListPullRequestsReturnsOnCall(i int, result1 []*resource
 	}{result1, result2}
 }
 
-func (fake *FakeGithub) PostComment(arg1 string, arg2 string) error {
+func (fake *FakeGithub) PostComment(arg1 string, arg2 string, arg3 string) error {
 	fake.postCommentMutex.Lock()
 	ret, specificReturn := fake.postCommentReturnsOnCall[len(fake.postCommentArgsForCall)]
 	fake.postCommentArgsForCall = append(fake.postCommentArgsForCall, struct {
 		arg1 string
 		arg2 string
-	}{arg1, arg2})
-	fake.recordInvocation("PostComment", []interface{}{arg1, arg2})
+		arg3 string
+	}{arg1, arg2, arg3})
+	fake.recordInvocation("PostComment", []interface{}{arg1, arg2, arg3})
 	fake.postCommentMutex.Unlock()
 	if fake.PostCommentStub != nil {
-		return fake.PostCommentStub(arg1, arg2)
+		return fake.PostCommentStub(arg1, arg2, arg3)
 	}
 	if specificReturn {
 		return ret.result1
@@ -450,17 +454,17 @@ func (fake *FakeGithub) PostCommentCallCount() int {
 	return len(fake.postCommentArgsForCall)
 }
 
-func (fake *FakeGithub) PostCommentCalls(stub func(string, string) error) {
+func (fake *FakeGithub) PostCommentCalls(stub func(string, string, string) error) {
 	fake.postCommentMutex.Lock()
 	defer fake.postCommentMutex.Unlock()
 	fake.PostCommentStub = stub
 }
 
-func (fake *FakeGithub) PostCommentArgsForCall(i int) (string, string) {
+func (fake *FakeGithub) PostCommentArgsForCall(i int) (string, string, string) {
 	fake.postCommentMutex.RLock()
 	defer fake.postCommentMutex.RUnlock()
 	argsForCall := fake.postCommentArgsForCall[i]
-	return argsForCall.arg1, argsForCall.arg2
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
 }
 
 func (fake *FakeGithub) PostCommentReturns(result1 error) {
