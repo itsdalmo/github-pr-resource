@@ -203,9 +203,10 @@ func (m *GithubClient) ListModifiedFiles(prNumber int) ([]string, error) {
 // PostComment to a pull request or issue.
 func (m *GithubClient) PostComment(prNumber, comment string, commentTitle string) error {
 	if commentTitle == "" {
-		commentTitle = "# Concourse CI\r\n"
+		commentTitle = "# Concourse CI"
 	}
-	comment = commentTitle + comment
+	comment = commentTitle + "\r\n" + comment
+
 	pr, err := strconv.Atoi(prNumber)
 	if err != nil {
 		return fmt.Errorf("failed to convert pull request number to int: %s", err)
@@ -362,7 +363,7 @@ func (m *GithubClient) UpdateCommitStatus(commitRef, baseContext, statusContext,
 
 func (m *GithubClient) DeletePreviousComments(prNumber string, commentTitle string) error {
 	if commentTitle == "" {
-		commentTitle = "# Concourse CI\r\n"
+		commentTitle = "# Concourse CI"
 	}
 
 	pr, err := strconv.Atoi(prNumber)
