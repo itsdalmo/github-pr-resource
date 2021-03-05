@@ -27,6 +27,7 @@ type Source struct {
 	RequiredReviewApprovals int                         `json:"required_review_approvals"`
 	Labels                  []string                    `json:"labels"`
 	States                  []githubv4.PullRequestState `json:"states"`
+	StatusContext           string                      `json:"status_context"`
 }
 
 // Validate the source configuration.
@@ -95,6 +96,7 @@ type PullRequest struct {
 	Tip                 CommitObject
 	ApprovedReviewCount int
 	Labels              []LabelObject
+	HasStatus           bool
 }
 
 // PullRequestObject represents the GraphQL commit node.
@@ -142,6 +144,14 @@ type CommitObject struct {
 		}
 		Email string
 	}
+}
+
+// StatusObject represents the GraphQL FilesChanged node.
+// https://developer.github.com/v4/object/status/
+type StatusObject struct {
+	Context struct {
+		Context *githubv4.String
+	} `graphql:"context(name:$statusContextName)"`
 }
 
 // ChangedFileObject represents the GraphQL FilesChanged node.
