@@ -37,6 +37,7 @@ Make sure to check out [#migrating](#migrating) to learn more.
 | `labels`                    | No       | `["bug", "enhancement"]`         | The labels on the PR. The pipeline will only trigger on pull requests having at least one of the specified labels.                                                                                                                                                                         |
 | `disable_git_lfs`           | No       | `true`                           | Disable Git LFS, skipping an attempt to convert pointers of files tracked into their corresponding objects when checked out into a working copy.                                                                                                                                           |
 | `states`                    | No       | `["OPEN", "MERGED"]`             | The PR states to select (`OPEN`, `MERGED` or `CLOSED`). The pipeline will only trigger on pull requests matching one of the specified states. Default is ["OPEN"].                                                                                                                         |
+| `check_run_name`            | No       | `Lint`                           | Check run name on the PR. The pipeline will only trigger on pull requests with matching check run.
 
 Notes:
  - If `v3_endpoint` is set, `v4_endpoint` must also be set (and the other way around).
@@ -64,6 +65,9 @@ One thing to keep in mind however, is that pull requests that are opened from a 
 generate notifications over the webhook. So if you have a repository with little traffic and expect pull requests from forks,
  you'll need to discover those versions with `check_every: 1m` for instance. `check` in this resource is not a costly operation,
  so normally you should not have to worry about the rate limit.
+
+**Note when using `check_run_name`:**
+If `check_run_name` source configuration is set, it is recommended to instead subscribe to `check_run` and `check_suite` webhook events instead.
 
 #### `get`
 
