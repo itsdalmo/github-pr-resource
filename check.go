@@ -20,7 +20,10 @@ func Check(request CheckRequest, manager Github) (CheckResponse, error) {
 		filterStates = request.Source.States
 	}
 
-	pulls, err := manager.ListPullRequests(filterStates)
+	// Don't fetch labels if we do not need it
+	disableFetchLabels := (len(request.Source.Labels) == 0)
+
+	pulls, err := manager.ListPullRequests(filterStates, disableFetchLabels, request.Source.CheckRunName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get last commits: %s", err)
 	}

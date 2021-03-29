@@ -20,7 +20,7 @@ import (
 // Github for testing purposes.
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -o fakes/fake_github.go . Github
 type Github interface {
-	ListPullRequests([]githubv4.PullRequestState) ([]*PullRequest, error)
+	ListPullRequests([]githubv4.PullRequestState, bool, string) ([]*PullRequest, error)
 	ListModifiedFiles(int) ([]string, error)
 	PostComment(string, string) error
 	GetPullRequest(string, string) (*PullRequest, error)
@@ -98,7 +98,7 @@ func NewGithubClient(s *Source) (*GithubClient, error) {
 }
 
 // ListPullRequests gets the last commit on all pull requests with the matching state.
-func (m *GithubClient) ListPullRequests(prStates []githubv4.PullRequestState) ([]*PullRequest, error) {
+func (m *GithubClient) ListPullRequests(prStates []githubv4.PullRequestState, disableFetchLabels bool, checkRunName string) ([]*PullRequest, error) {
 	var query struct {
 		Repository struct {
 			PullRequests struct {
@@ -111,7 +111,22 @@ func (m *GithubClient) ListPullRequests(prStates []githubv4.PullRequestState) ([
 						Commits struct {
 							Edges []struct {
 								Node struct {
-									Commit CommitObject
+									Commit struct {
+										CommitObject
+										CheckSuites struct {
+											Edges []struct {
+												Node struct {
+													CheckRuns struct {
+														Edges []struct {
+															Node struct {
+																CheckRunObject
+															}
+														}
+													} `graphql:"checkRuns(last: $checkRunsLast, filterBy: {checkName: $checkRunName, status: $checkRunStatus})"`
+												}
+											}
+										} `graphql:"checkSuites(last: $checkSuitesLast)"`
+									}
 								}
 							}
 						} `graphql:"commits(last:$commitsLast)"`
@@ -132,6 +147,20 @@ func (m *GithubClient) ListPullRequests(prStates []githubv4.PullRequestState) ([
 		} `graphql:"repository(owner:$repositoryOwner,name:$repositoryName)"`
 	}
 
+	// Don't fetch any labels if not necessary
+	labelsFirst := 100
+	if disableFetchLabels {
+		labelsFirst = 0
+	}
+
+	// Don't fetch any checkSuites and checkRuns if not necessary
+	checkSuitesLast := 10
+	checkRunsLast := 10
+	if checkRunName == "" {
+		checkSuitesLast = 0
+		checkRunsLast = 0
+	}
+
 	vars := map[string]interface{}{
 		"repositoryOwner": githubv4.String(m.Owner),
 		"repositoryName":  githubv4.String(m.Repository),
@@ -140,7 +169,11 @@ func (m *GithubClient) ListPullRequests(prStates []githubv4.PullRequestState) ([
 		"prCursor":        (*githubv4.String)(nil),
 		"commitsLast":     githubv4.Int(1),
 		"prReviewStates":  []githubv4.PullRequestReviewState{githubv4.PullRequestReviewStateApproved},
-		"labelsFirst":     githubv4.Int(100),
+		"labelsFirst":     githubv4.Int(labelsFirst),
+		"checkSuitesLast": githubv4.Int(checkSuitesLast),
+		"checkRunsLast":   githubv4.Int(checkRunsLast),
+		"checkRunName":    githubv4.String(checkRunName),
+		"checkRunStatus":  githubv4.CheckStatusStateCompleted,
 	}
 
 	var response []*PullRequest
@@ -155,9 +188,24 @@ func (m *GithubClient) ListPullRequests(prStates []githubv4.PullRequestState) ([
 			}
 
 			for _, c := range p.Node.Commits.Edges {
+				// Don't produce a new resource version if check run is specified but it's not found
+				if checkRunName != "" {
+					successfulCheckRunFound := false
+					for _, cs := range c.Node.Commit.CheckSuites.Edges {
+						for _, cr := range cs.Node.CheckRuns.Edges {
+							if cr.Node.Conclusion == githubv4.CheckConclusionStateSuccess {
+								successfulCheckRunFound = true
+							}
+						}
+					}
+					if !successfulCheckRunFound {
+						continue
+					}
+				}
+
 				response = append(response, &PullRequest{
 					PullRequestObject:   p.Node.PullRequestObject,
-					Tip:                 c.Node.Commit,
+					Tip:                 c.Node.Commit.CommitObject,
 					ApprovedReviewCount: p.Node.Reviews.TotalCount,
 					Labels:              labels,
 				})
