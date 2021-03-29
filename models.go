@@ -27,6 +27,7 @@ type Source struct {
 	RequiredReviewApprovals int                         `json:"required_review_approvals"`
 	Labels                  []string                    `json:"labels"`
 	States                  []githubv4.PullRequestState `json:"states"`
+	CheckRunName            string                      `json:"check_run_name"`
 }
 
 // Validate the source configuration.
@@ -142,6 +143,14 @@ type CommitObject struct {
 		}
 		Email string
 	}
+}
+
+// CheckRunObject represents the GraphQL CheckRun node.
+// https://docs.github.com/en/graphql/reference/objects#checkrun
+type CheckRunObject struct {
+	Name       string
+	Status     githubv4.CheckStatusState
+	Conclusion githubv4.CheckConclusionState
 }
 
 // ChangedFileObject represents the GraphQL FilesChanged node.
