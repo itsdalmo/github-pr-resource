@@ -27,6 +27,7 @@ type Source struct {
 	RequiredReviewApprovals int                         `json:"required_review_approvals"`
 	Labels                  []string                    `json:"labels"`
 	States                  []githubv4.PullRequestState `json:"states"`
+	Branch                  string                      `json:"branch"`
 }
 
 // Validate the source configuration.
