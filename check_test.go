@@ -28,258 +28,296 @@ var (
 
 func TestCheck(t *testing.T) {
 	tests := []struct {
-		description  string
-		source       resource.Source
-		version      resource.Version
-		files        [][]string
-		pullRequests []*resource.PullRequest
-		expected     resource.CheckResponse
+		description                 string
+		source                      resource.Source
+		version                     resource.Version
+		files                       [][]string
+		pullRequests                []*resource.PullRequest
+		expected                    resource.CheckResponse
+		updateCommitStatusCallCount int
 	}{
+		//		{
+		//			description: "check returns the latest version if there is no previous",
+		//			source: resource.Source{
+		//				Repository:  "itsdalmo/test-repository",
+		//				AccessToken: "oauthtoken",
+		//			},
+		//			version:      resource.Version{},
+		//			pullRequests: testPullRequests,
+		//			files:        [][]string{},
+		//			expected: resource.CheckResponse{
+		//				resource.NewVersion(testPullRequests[1]),
+		//			},
+		//		},
+		//
+		//		{
+		//			description: "check returns the previous version when its still latest",
+		//			source: resource.Source{
+		//				Repository:  "itsdalmo/test-repository",
+		//				AccessToken: "oauthtoken",
+		//			},
+		//			version:      resource.NewVersion(testPullRequests[1]),
+		//			pullRequests: testPullRequests,
+		//			files:        [][]string{},
+		//			expected: resource.CheckResponse{
+		//				resource.NewVersion(testPullRequests[1]),
+		//			},
+		//		},
+		//
+		//		{
+		//			description: "check returns all new versions since the last",
+		//			source: resource.Source{
+		//				Repository:  "itsdalmo/test-repository",
+		//				AccessToken: "oauthtoken",
+		//			},
+		//			version:      resource.NewVersion(testPullRequests[3]),
+		//			pullRequests: testPullRequests,
+		//			files:        [][]string{},
+		//			expected: resource.CheckResponse{
+		//				resource.NewVersion(testPullRequests[2]),
+		//				resource.NewVersion(testPullRequests[1]),
+		//			},
+		//		},
+		//
+		//		{
+		//			description: "check will only return versions that match the specified paths",
+		//			source: resource.Source{
+		//				Repository:  "itsdalmo/test-repository",
+		//				AccessToken: "oauthtoken",
+		//				Paths:       []string{"terraform/*/*.tf", "terraform/*/*/*.tf"},
+		//			},
+		//			version:      resource.NewVersion(testPullRequests[3]),
+		//			pullRequests: testPullRequests,
+		//			files: [][]string{
+		//				{"README.md", "travis.yml"},
+		//				{"terraform/modules/ecs/main.tf", "README.md"},
+		//				{"terraform/modules/variables.tf", "travis.yml"},
+		//			},
+		//			expected: resource.CheckResponse{
+		//				resource.NewVersion(testPullRequests[2]),
+		//			},
+		//		},
+		//
+		//		{
+		//			description: "check will skip versions which only match the ignore paths",
+		//			source: resource.Source{
+		//				Repository:  "itsdalmo/test-repository",
+		//				AccessToken: "oauthtoken",
+		//				IgnorePaths: []string{"*.md", "*.yml"},
+		//			},
+		//			version:      resource.NewVersion(testPullRequests[3]),
+		//			pullRequests: testPullRequests,
+		//			files: [][]string{
+		//				{"README.md", "travis.yml"},
+		//				{"terraform/modules/ecs/main.tf", "README.md"},
+		//				{"terraform/modules/variables.tf", "travis.yml"},
+		//			},
+		//			expected: resource.CheckResponse{
+		//				resource.NewVersion(testPullRequests[2]),
+		//			},
+		//		},
+		//
+		//		{
+		//			description: "check correctly ignores [skip ci] when specified",
+		//			source: resource.Source{
+		//				Repository:    "itsdalmo/test-repository",
+		//				AccessToken:   "oauthtoken",
+		//				DisableCISkip: true,
+		//			},
+		//			version:      resource.NewVersion(testPullRequests[1]),
+		//			pullRequests: testPullRequests,
+		//			expected: resource.CheckResponse{
+		//				resource.NewVersion(testPullRequests[0]),
+		//			},
+		//		},
+		//
+		//		{
+		//			description: "check correctly ignores drafts when drafts are ignored",
+		//			source: resource.Source{
+		//				Repository:   "itsdalmo/test-repository",
+		//				AccessToken:  "oauthtoken",
+		//				IgnoreDrafts: true,
+		//			},
+		//			version:      resource.NewVersion(testPullRequests[3]),
+		//			pullRequests: testPullRequests,
+		//			expected: resource.CheckResponse{
+		//				resource.NewVersion(testPullRequests[1]),
+		//			},
+		//		},
+		//
+		//		{
+		//			description: "check does not ignore drafts when drafts are not ignored",
+		//			source: resource.Source{
+		//				Repository:   "itsdalmo/test-repository",
+		//				AccessToken:  "oauthtoken",
+		//				IgnoreDrafts: false,
+		//			},
+		//			version:      resource.NewVersion(testPullRequests[3]),
+		//			pullRequests: testPullRequests,
+		//			expected: resource.CheckResponse{
+		//				resource.NewVersion(testPullRequests[2]),
+		//				resource.NewVersion(testPullRequests[1]),
+		//			},
+		//		},
+		//
+		//		{
+		//			description: "check correctly ignores cross repo pull requests",
+		//			source: resource.Source{
+		//				Repository:   "itsdalmo/test-repository",
+		//				AccessToken:  "oauthtoken",
+		//				DisableForks: true,
+		//			},
+		//			version:      resource.NewVersion(testPullRequests[5]),
+		//			pullRequests: testPullRequests,
+		//			expected: resource.CheckResponse{
+		//				resource.NewVersion(testPullRequests[3]),
+		//				resource.NewVersion(testPullRequests[2]),
+		//				resource.NewVersion(testPullRequests[1]),
+		//			},
+		//		},
+		//
+		//		{
+		//			description: "check supports specifying base branch",
+		//			source: resource.Source{
+		//				Repository:  "itsdalmo/test-repository",
+		//				AccessToken: "oauthtoken",
+		//				BaseBranch:  "develop",
+		//			},
+		//			version:      resource.Version{},
+		//			pullRequests: testPullRequests,
+		//			files:        [][]string{},
+		//			expected: resource.CheckResponse{
+		//				resource.NewVersion(testPullRequests[6]),
+		//			},
+		//		},
+		//
+		//		{
+		//			description: "check correctly ignores PRs with no approved reviews when specified",
+		//			source: resource.Source{
+		//				Repository:              "itsdalmo/test-repository",
+		//				AccessToken:             "oauthtoken",
+		//				RequiredReviewApprovals: 1,
+		//			},
+		//			version:      resource.NewVersion(testPullRequests[8]),
+		//			pullRequests: testPullRequests,
+		//			expected: resource.CheckResponse{
+		//				resource.NewVersion(testPullRequests[7]),
+		//			},
+		//		},
+		//
+		//		{
+		//			description: "check returns latest version from a PR with at least one of the desired labels on it",
+		//			source: resource.Source{
+		//				Repository:  "itsdalmo/test-repository",
+		//				AccessToken: "oauthtoken",
+		//				Labels:      []string{"enhancement"},
+		//			},
+		//			version:      resource.Version{},
+		//			pullRequests: testPullRequests,
+		//			files:        [][]string{},
+		//			expected: resource.CheckResponse{
+		//				resource.NewVersion(testPullRequests[6]),
+		//			},
+		//		},
+		//
+		//		{
+		//			description: "check returns latest version from a PR with a single state filter",
+		//			source: resource.Source{
+		//				Repository:  "itsdalmo/test-repository",
+		//				AccessToken: "oauthtoken",
+		//				States:      []githubv4.PullRequestState{githubv4.PullRequestStateClosed},
+		//			},
+		//			version:      resource.Version{},
+		//			pullRequests: testPullRequests,
+		//			files:        [][]string{},
+		//			expected: resource.CheckResponse{
+		//				resource.NewVersion(testPullRequests[9]),
+		//			},
+		//		},
+		//
+		//		{
+		//			description: "check filters out versions from a PR which do not match the state filter",
+		//			source: resource.Source{
+		//				Repository:  "itsdalmo/test-repository",
+		//				AccessToken: "oauthtoken",
+		//				States:      []githubv4.PullRequestState{githubv4.PullRequestStateOpen},
+		//			},
+		//			version:      resource.Version{},
+		//			pullRequests: testPullRequests[9:11],
+		//			files:        [][]string{},
+		//			expected:     resource.CheckResponse(nil),
+		//		},
+		//
+		//		{
+		//			description: "check returns versions from a PR with multiple state filters",
+		//			source: resource.Source{
+		//				Repository:  "itsdalmo/test-repository",
+		//				AccessToken: "oauthtoken",
+		//				States:      []githubv4.PullRequestState{githubv4.PullRequestStateClosed, githubv4.PullRequestStateMerged},
+		//			},
+		//			version:      resource.NewVersion(testPullRequests[11]),
+		//			pullRequests: testPullRequests,
+		//			files:        [][]string{},
+		//			expected: resource.CheckResponse{
+		//				resource.NewVersion(testPullRequests[9]),
+		//				resource.NewVersion(testPullRequests[10]),
+		//			},
+		//		},
+		//
+		//		{
+		//			description: "check returns versions with no status",
+		//			source: resource.Source{
+		//				Repository:    "itsdalmo/test-repository",
+		//				AccessToken:   "oauthtoken",
+		//				StatusContext: "some-status",
+		//			},
+		//			version:      resource.NewVersion(testPullRequests[11]),
+		//			pullRequests: testPullRequests,
+		//			files:        [][]string{},
+		//			expected: resource.CheckResponse{
+		//				resource.NewVersion(testPullRequests[11]),
+		//				resource.NewVersion(testPullRequests[8]),
+		//				resource.NewVersion(testPullRequests[5]),
+		//				resource.NewVersion(testPullRequests[4]),
+		//				resource.NewVersion(testPullRequests[2]),
+		//			},
+		//		},
+		//		{
+		//			description: "check send status when no files in path",
+		//			source: resource.Source{
+		//				Repository:  "itsdalmo/test-repository",
+		//				AccessToken: "oauthtoken",
+		//				BaseBranch:  "develop",
+		//				Paths:       []string{"some/path"},
+		//				StatusIfPathsEmpty: resource.Status{
+		//					Context: "ctx",
+		//					Status:  "status",
+		//				},
+		//			},
+		//			version:                     resource.Version{},
+		//			pullRequests:                testPullRequests,
+		//			files:                       [][]string{},
+		//			expected:                    nil,
+		//			updateCommitStatusCallCount: 1,
+		//		},
 		{
-			description: "check returns the latest version if there is no previous",
-			source: resource.Source{
-				Repository:  "itsdalmo/test-repository",
-				AccessToken: "oauthtoken",
-			},
-			version:      resource.Version{},
-			pullRequests: testPullRequests,
-			files:        [][]string{},
-			expected: resource.CheckResponse{
-				resource.NewVersion(testPullRequests[1]),
-			},
-		},
-
-		{
-			description: "check returns the previous version when its still latest",
-			source: resource.Source{
-				Repository:  "itsdalmo/test-repository",
-				AccessToken: "oauthtoken",
-			},
-			version:      resource.NewVersion(testPullRequests[1]),
-			pullRequests: testPullRequests,
-			files:        [][]string{},
-			expected: resource.CheckResponse{
-				resource.NewVersion(testPullRequests[1]),
-			},
-		},
-
-		{
-			description: "check returns all new versions since the last",
-			source: resource.Source{
-				Repository:  "itsdalmo/test-repository",
-				AccessToken: "oauthtoken",
-			},
-			version:      resource.NewVersion(testPullRequests[3]),
-			pullRequests: testPullRequests,
-			files:        [][]string{},
-			expected: resource.CheckResponse{
-				resource.NewVersion(testPullRequests[2]),
-				resource.NewVersion(testPullRequests[1]),
-			},
-		},
-
-		{
-			description: "check will only return versions that match the specified paths",
-			source: resource.Source{
-				Repository:  "itsdalmo/test-repository",
-				AccessToken: "oauthtoken",
-				Paths:       []string{"terraform/*/*.tf", "terraform/*/*/*.tf"},
-			},
-			version:      resource.NewVersion(testPullRequests[3]),
-			pullRequests: testPullRequests,
-			files: [][]string{
-				{"README.md", "travis.yml"},
-				{"terraform/modules/ecs/main.tf", "README.md"},
-				{"terraform/modules/variables.tf", "travis.yml"},
-			},
-			expected: resource.CheckResponse{
-				resource.NewVersion(testPullRequests[2]),
-			},
-		},
-
-		{
-			description: "check will skip versions which only match the ignore paths",
-			source: resource.Source{
-				Repository:  "itsdalmo/test-repository",
-				AccessToken: "oauthtoken",
-				IgnorePaths: []string{"*.md", "*.yml"},
-			},
-			version:      resource.NewVersion(testPullRequests[3]),
-			pullRequests: testPullRequests,
-			files: [][]string{
-				{"README.md", "travis.yml"},
-				{"terraform/modules/ecs/main.tf", "README.md"},
-				{"terraform/modules/variables.tf", "travis.yml"},
-			},
-			expected: resource.CheckResponse{
-				resource.NewVersion(testPullRequests[2]),
-			},
-		},
-
-		{
-			description: "check correctly ignores [skip ci] when specified",
-			source: resource.Source{
-				Repository:    "itsdalmo/test-repository",
-				AccessToken:   "oauthtoken",
-				DisableCISkip: true,
-			},
-			version:      resource.NewVersion(testPullRequests[1]),
-			pullRequests: testPullRequests,
-			expected: resource.CheckResponse{
-				resource.NewVersion(testPullRequests[0]),
-			},
-		},
-
-		{
-			description: "check correctly ignores drafts when drafts are ignored",
-			source: resource.Source{
-				Repository:   "itsdalmo/test-repository",
-				AccessToken:  "oauthtoken",
-				IgnoreDrafts: true,
-			},
-			version:      resource.NewVersion(testPullRequests[3]),
-			pullRequests: testPullRequests,
-			expected: resource.CheckResponse{
-				resource.NewVersion(testPullRequests[1]),
-			},
-		},
-
-		{
-			description: "check does not ignore drafts when drafts are not ignored",
-			source: resource.Source{
-				Repository:   "itsdalmo/test-repository",
-				AccessToken:  "oauthtoken",
-				IgnoreDrafts: false,
-			},
-			version:      resource.NewVersion(testPullRequests[3]),
-			pullRequests: testPullRequests,
-			expected: resource.CheckResponse{
-				resource.NewVersion(testPullRequests[2]),
-				resource.NewVersion(testPullRequests[1]),
-			},
-		},
-
-		{
-			description: "check correctly ignores cross repo pull requests",
-			source: resource.Source{
-				Repository:   "itsdalmo/test-repository",
-				AccessToken:  "oauthtoken",
-				DisableForks: true,
-			},
-			version:      resource.NewVersion(testPullRequests[5]),
-			pullRequests: testPullRequests,
-			expected: resource.CheckResponse{
-				resource.NewVersion(testPullRequests[3]),
-				resource.NewVersion(testPullRequests[2]),
-				resource.NewVersion(testPullRequests[1]),
-			},
-		},
-
-		{
-			description: "check supports specifying base branch",
+			description: "check send status when no files in path after filter",
 			source: resource.Source{
 				Repository:  "itsdalmo/test-repository",
 				AccessToken: "oauthtoken",
 				BaseBranch:  "develop",
+				Paths:       []string{"some/path"},
+				StatusIfPathsEmpty: resource.Status{
+					Context: "ctx",
+					Status:  "status",
+				},
+				IgnorePaths: []string{"some/path/x"},
 			},
-			version:      resource.Version{},
-			pullRequests: testPullRequests,
-			files:        [][]string{},
-			expected: resource.CheckResponse{
-				resource.NewVersion(testPullRequests[6]),
-			},
-		},
-
-		{
-			description: "check correctly ignores PRs with no approved reviews when specified",
-			source: resource.Source{
-				Repository:              "itsdalmo/test-repository",
-				AccessToken:             "oauthtoken",
-				RequiredReviewApprovals: 1,
-			},
-			version:      resource.NewVersion(testPullRequests[8]),
-			pullRequests: testPullRequests,
-			expected: resource.CheckResponse{
-				resource.NewVersion(testPullRequests[7]),
-			},
-		},
-
-		{
-			description: "check returns latest version from a PR with at least one of the desired labels on it",
-			source: resource.Source{
-				Repository:  "itsdalmo/test-repository",
-				AccessToken: "oauthtoken",
-				Labels:      []string{"enhancement"},
-			},
-			version:      resource.Version{},
-			pullRequests: testPullRequests,
-			files:        [][]string{},
-			expected: resource.CheckResponse{
-				resource.NewVersion(testPullRequests[6]),
-			},
-		},
-
-		{
-			description: "check returns latest version from a PR with a single state filter",
-			source: resource.Source{
-				Repository:  "itsdalmo/test-repository",
-				AccessToken: "oauthtoken",
-				States:      []githubv4.PullRequestState{githubv4.PullRequestStateClosed},
-			},
-			version:      resource.Version{},
-			pullRequests: testPullRequests,
-			files:        [][]string{},
-			expected: resource.CheckResponse{
-				resource.NewVersion(testPullRequests[9]),
-			},
-		},
-
-		{
-			description: "check filters out versions from a PR which do not match the state filter",
-			source: resource.Source{
-				Repository:  "itsdalmo/test-repository",
-				AccessToken: "oauthtoken",
-				States:      []githubv4.PullRequestState{githubv4.PullRequestStateOpen},
-			},
-			version:      resource.Version{},
-			pullRequests: testPullRequests[9:11],
-			files:        [][]string{},
-			expected:     resource.CheckResponse(nil),
-		},
-
-		{
-			description: "check returns versions from a PR with multiple state filters",
-			source: resource.Source{
-				Repository:  "itsdalmo/test-repository",
-				AccessToken: "oauthtoken",
-				States:      []githubv4.PullRequestState{githubv4.PullRequestStateClosed, githubv4.PullRequestStateMerged},
-			},
-			version:      resource.NewVersion(testPullRequests[11]),
-			pullRequests: testPullRequests,
-			files:        [][]string{},
-			expected: resource.CheckResponse{
-				resource.NewVersion(testPullRequests[9]),
-				resource.NewVersion(testPullRequests[10]),
-			},
-		},
-
-		{
-			description: "check returns versions with no status",
-			source: resource.Source{
-				Repository:    "itsdalmo/test-repository",
-				AccessToken:   "oauthtoken",
-				StatusContext: "some-status",
-			},
-			version:      resource.NewVersion(testPullRequests[11]),
-			pullRequests: testPullRequests,
-			files:        [][]string{},
-			expected: resource.CheckResponse{
-				resource.NewVersion(testPullRequests[11]),
-				resource.NewVersion(testPullRequests[8]),
-				resource.NewVersion(testPullRequests[5]),
-				resource.NewVersion(testPullRequests[4]),
-				resource.NewVersion(testPullRequests[2]),
-			},
+			version:                     resource.Version{},
+			pullRequests:                testPullRequests,
+			files:                       [][]string{{"some/path/x"}},
+			expected:                    nil,
+			updateCommitStatusCallCount: 1,
 		},
 	}
 
@@ -312,6 +350,7 @@ func TestCheck(t *testing.T) {
 				assert.Equal(t, tc.expected, output)
 			}
 			assert.Equal(t, 1, github.ListPullRequestsCallCount())
+			assert.Equal(t, tc.updateCommitStatusCallCount, github.UpdateCommitStatusCallCount())
 		})
 	}
 }
