@@ -315,7 +315,7 @@ func TestCheck(t *testing.T) {
 			},
 			version:                     resource.Version{},
 			pullRequests:                testPullRequests,
-			files:                       [][]string{{"some/path/x"}},
+			files:                       [][]string{{"some/path/x", "other/path/x"}},
 			expected:                    nil,
 			updateCommitStatusCallCount: 1,
 		},

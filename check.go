@@ -108,11 +108,29 @@ Loop:
 				}
 				wanted = append(wanted, w...)
 			}
+			// check if there are no files in the selected paths
 			if len(wanted) == 0 {
 				if err := sendEmptyPathStatus(p, request.Source, manager); err != nil {
 					return nil, err
 				}
 				continue Loop
+			}
+
+			// ...of the files in the selected paths, filter out those that are ignored
+			if len(request.Source.IgnorePaths) > 0 {
+				for _, pattern := range request.Source.IgnorePaths {
+					wanted, err = FilterIgnorePath(wanted, pattern)
+					if err != nil {
+						return nil, fmt.Errorf("ignore path match failed: %s", err)
+					}
+				}
+				// check if all the files in the selected paths are ignored
+				if len(wanted) == 0 {
+					if err := sendEmptyPathStatus(p, request.Source, manager); err != nil {
+						return nil, err
+					}
+					continue Loop
+				}
 			}
 		}
 
