@@ -332,6 +332,9 @@ func (m *GithubClient) GetPullRequest(prNumber, commitRef string) (*PullRequest,
 
 // UpdateCommitStatus for a given commit (not supported by V4 API).
 func (m *GithubClient) UpdateCommitStatus(commitRef, baseContext, statusContext, status, targetURL, description string) error {
+
+	status = strings.ToLower(status)
+
 	if baseContext == "" {
 		baseContext = "concourse-ci"
 	}
@@ -348,13 +351,43 @@ func (m *GithubClient) UpdateCommitStatus(commitRef, baseContext, statusContext,
 		description = fmt.Sprintf("Concourse CI build %s", status)
 	}
 
+	// check to see if the most recent status is already correct
+	const pageSize = 100
+	for i := 1; ; i++ {
+		sts, _, err := m.V3.Repositories.ListStatuses(
+			context.TODO(),
+			m.Owner,
+			m.Repository,
+			commitRef,
+			&github.ListOptions{
+				Page:    i,
+				PerPage: pageSize,
+			},
+		)
+		if err != nil {
+			return err
+		}
+		for _, st := range sts {
+			if st.GetContext() == statusContext {
+				if st.GetState() == status {
+					// most recent status is already correct
+					return nil
+				}
+				break
+			}
+		}
+		if len(sts) < pageSize {
+			break
+		}
+	}
+
 	_, _, err := m.V3.Repositories.CreateStatus(
 		context.TODO(),
 		m.Owner,
 		m.Repository,
 		commitRef,
 		&github.RepoStatus{
-			State:       github.String(strings.ToLower(status)),
+			State:       github.String(status),
 			TargetURL:   github.String(targetURL),
 			Description: github.String(description),
 			Context:     github.String(path.Join(baseContext, statusContext)),
