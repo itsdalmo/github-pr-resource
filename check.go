@@ -109,6 +109,9 @@ Loop:
 				wanted = append(wanted, w...)
 			}
 			if len(wanted) == 0 {
+				if err := sendEmptyPathStatus(p, request.Source, manager); err != nil {
+					return nil, err
+				}
 				continue Loop
 			}
 		}
@@ -123,6 +126,9 @@ Loop:
 				}
 			}
 			if len(wanted) == 0 {
+				if err := sendEmptyPathStatus(p, request.Source, manager); err != nil {
+					return nil, err
+				}
 				continue Loop
 			}
 		}
@@ -141,6 +147,17 @@ Loop:
 		response = CheckResponse{response[len(response)-1]}
 	}
 	return response, nil
+}
+
+func sendEmptyPathStatus(pull *PullRequest, src Source, mgr Github) error {
+	// send a status when there are no changes in any of the valid paths, if user has configured it.
+	s := src.StatusIfPathsEmpty
+	if (s != Status{}) {
+		if err := mgr.UpdateCommitStatus(pull.Tip.OID, "", s.Context, s.Status, "", ""); err != nil {
+			return fmt.Errorf("failed to set status for paths filter with no changed files : %s", err)
+		}
+	}
+	return nil
 }
 
 // ContainsSkipCI returns true if a string contains [ci skip] or [skip ci].

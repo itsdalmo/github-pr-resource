@@ -28,6 +28,12 @@ type Source struct {
 	Labels                  []string                    `json:"labels"`
 	States                  []githubv4.PullRequestState `json:"states"`
 	StatusContext           string                      `json:"status_context"`
+	StatusIfPathsEmpty      Status                      `json:"status_if_paths_empty"`
+}
+
+type Status struct {
+	Context string `json:"context"`
+	Status  string `json:"status"`
 }
 
 // Validate the source configuration.

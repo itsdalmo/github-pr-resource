@@ -28,12 +28,13 @@ var (
 
 func TestCheck(t *testing.T) {
 	tests := []struct {
-		description  string
-		source       resource.Source
-		version      resource.Version
-		files        [][]string
-		pullRequests []*resource.PullRequest
-		expected     resource.CheckResponse
+		description                 string
+		source                      resource.Source
+		version                     resource.Version
+		files                       [][]string
+		pullRequests                []*resource.PullRequest
+		expected                    resource.CheckResponse
+		updateCommitStatusCallCount int
 	}{
 		{
 			description: "check returns the latest version if there is no previous",
@@ -281,6 +282,43 @@ func TestCheck(t *testing.T) {
 				resource.NewVersion(testPullRequests[2]),
 			},
 		},
+		{
+			description: "check send status when no files in path",
+			source: resource.Source{
+				Repository:  "itsdalmo/test-repository",
+				AccessToken: "oauthtoken",
+				BaseBranch:  "develop",
+				Paths:       []string{"some/path"},
+				StatusIfPathsEmpty: resource.Status{
+					Context: "ctx",
+					Status:  "status",
+				},
+			},
+			version:                     resource.Version{},
+			pullRequests:                testPullRequests,
+			files:                       [][]string{},
+			expected:                    nil,
+			updateCommitStatusCallCount: 1,
+		},
+		{
+			description: "check send status when no files in path after filter",
+			source: resource.Source{
+				Repository:  "itsdalmo/test-repository",
+				AccessToken: "oauthtoken",
+				BaseBranch:  "develop",
+				Paths:       []string{"some/path"},
+				StatusIfPathsEmpty: resource.Status{
+					Context: "ctx",
+					Status:  "status",
+				},
+				IgnorePaths: []string{"some/path/x"},
+			},
+			version:                     resource.Version{},
+			pullRequests:                testPullRequests,
+			files:                       [][]string{{"some/path/x"}},
+			expected:                    nil,
+			updateCommitStatusCallCount: 1,
+		},
 	}
 
 	for _, tc := range tests {
@@ -312,6 +350,7 @@ func TestCheck(t *testing.T) {
 				assert.Equal(t, tc.expected, output)
 			}
 			assert.Equal(t, 1, github.ListPullRequestsCallCount())
+			assert.Equal(t, tc.updateCommitStatusCallCount, github.UpdateCommitStatusCallCount())
 		})
 	}
 }
