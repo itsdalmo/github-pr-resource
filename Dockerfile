@@ -1,4 +1,4 @@
-FROM golang:1.15 as builder
+FROM golang:1.16 as builder
 ADD . /go/src/github.com/telia-oss/github-pr-resource
 WORKDIR /go/src/github.com/telia-oss/github-pr-resource
 RUN curl -sL https://taskfile.dev/install.sh | sh

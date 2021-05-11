@@ -1,0 +1,21 @@
+{
+  "source": {
+    "repository": "90poe/operational-effectiveness",
+    "base_branch": "master",
+    "access_token": "...",
+    "v3_endpoint": "https://git-proxy.development.devopenocean.studio",
+    "v4_endpoint": "https://git-proxy.development.devopenocean.studio/graphql",
+    "paths": ["x"],
+    "ignore_paths": ["x/*.md", "x/.gitignore"],
+    "ignore_drafts": true,
+    "status_context": "concourse-ci/voyage-monitor/x",
+    "status_if_paths_empty": {
+        "context": "voyage-monitor/x",
+        "status": "success"
+    }
+  },
+  "version": {
+      "pr": "312",
+      "commit": "4672212"
+    }
+}
