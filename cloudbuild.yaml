@@ -1,0 +1,10 @@
+timeout: 2700s
+
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '--tag=gcr.io/foundry-core-development/github-pr-resource:0.3.0'
+      - '--file=Dockerfile'
+      - '.'
+images: ['gcr.io/foundry-core-development/github-pr-resource:0.3.0']
