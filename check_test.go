@@ -50,7 +50,7 @@ func TestCheck(t *testing.T) {
 		},
 
 		{
-			description: "check returns the previous version when its still latest",
+			description: "check returns all open PRs if there is a previous",
 			source: resource.Source{
 				Repository:  "itsdalmo/test-repository",
 				AccessToken: "oauthtoken",
@@ -59,20 +59,13 @@ func TestCheck(t *testing.T) {
 			pullRequests: testPullRequests,
 			files:        [][]string{},
 			expected: resource.CheckResponse{
-				resource.NewVersion(testPullRequests[1]),
-			},
-		},
-
-		{
-			description: "check returns all new versions since the last",
-			source: resource.Source{
-				Repository:  "itsdalmo/test-repository",
-				AccessToken: "oauthtoken",
-			},
-			version:      resource.NewVersion(testPullRequests[3]),
-			pullRequests: testPullRequests,
-			files:        [][]string{},
-			expected: resource.CheckResponse{
+				resource.NewVersion(testPullRequests[11]),
+				resource.NewVersion(testPullRequests[8]),
+				resource.NewVersion(testPullRequests[7]),
+				resource.NewVersion(testPullRequests[6]),
+				resource.NewVersion(testPullRequests[5]),
+				resource.NewVersion(testPullRequests[4]),
+				resource.NewVersion(testPullRequests[3]),
 				resource.NewVersion(testPullRequests[2]),
 				resource.NewVersion(testPullRequests[1]),
 			},
@@ -93,6 +86,7 @@ func TestCheck(t *testing.T) {
 				{"terraform/modules/variables.tf", "travis.yml"},
 			},
 			expected: resource.CheckResponse{
+				resource.NewVersion(testPullRequests[3]),
 				resource.NewVersion(testPullRequests[2]),
 			},
 		},
@@ -112,6 +106,7 @@ func TestCheck(t *testing.T) {
 				{"terraform/modules/variables.tf", "travis.yml"},
 			},
 			expected: resource.CheckResponse{
+				resource.NewVersion(testPullRequests[3]),
 				resource.NewVersion(testPullRequests[2]),
 			},
 		},
@@ -126,6 +121,15 @@ func TestCheck(t *testing.T) {
 			version:      resource.NewVersion(testPullRequests[1]),
 			pullRequests: testPullRequests,
 			expected: resource.CheckResponse{
+				resource.NewVersion(testPullRequests[11]),
+				resource.NewVersion(testPullRequests[8]),
+				resource.NewVersion(testPullRequests[7]),
+				resource.NewVersion(testPullRequests[6]),
+				resource.NewVersion(testPullRequests[5]),
+				resource.NewVersion(testPullRequests[4]),
+				resource.NewVersion(testPullRequests[3]),
+				resource.NewVersion(testPullRequests[2]),
+				resource.NewVersion(testPullRequests[1]),
 				resource.NewVersion(testPullRequests[0]),
 			},
 		},
@@ -140,6 +144,13 @@ func TestCheck(t *testing.T) {
 			version:      resource.NewVersion(testPullRequests[3]),
 			pullRequests: testPullRequests,
 			expected: resource.CheckResponse{
+				resource.NewVersion(testPullRequests[11]),
+				resource.NewVersion(testPullRequests[8]),
+				resource.NewVersion(testPullRequests[7]),
+				resource.NewVersion(testPullRequests[6]),
+				resource.NewVersion(testPullRequests[5]),
+				resource.NewVersion(testPullRequests[4]),
+				resource.NewVersion(testPullRequests[3]),
 				resource.NewVersion(testPullRequests[1]),
 			},
 		},
@@ -154,6 +165,13 @@ func TestCheck(t *testing.T) {
 			version:      resource.NewVersion(testPullRequests[3]),
 			pullRequests: testPullRequests,
 			expected: resource.CheckResponse{
+				resource.NewVersion(testPullRequests[11]),
+				resource.NewVersion(testPullRequests[8]),
+				resource.NewVersion(testPullRequests[7]),
+				resource.NewVersion(testPullRequests[6]),
+				resource.NewVersion(testPullRequests[5]),
+				resource.NewVersion(testPullRequests[4]),
+				resource.NewVersion(testPullRequests[3]),
 				resource.NewVersion(testPullRequests[2]),
 				resource.NewVersion(testPullRequests[1]),
 			},
@@ -169,6 +187,11 @@ func TestCheck(t *testing.T) {
 			version:      resource.NewVersion(testPullRequests[5]),
 			pullRequests: testPullRequests,
 			expected: resource.CheckResponse{
+				resource.NewVersion(testPullRequests[11]),
+				resource.NewVersion(testPullRequests[8]),
+				resource.NewVersion(testPullRequests[7]),
+				resource.NewVersion(testPullRequests[6]),
+				resource.NewVersion(testPullRequests[5]),
 				resource.NewVersion(testPullRequests[3]),
 				resource.NewVersion(testPullRequests[2]),
 				resource.NewVersion(testPullRequests[1]),

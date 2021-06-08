@@ -11,6 +11,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/go-github/v28/github"
 	"github.com/shurcooL/githubv4"
@@ -20,7 +21,7 @@ import (
 // Github for testing purposes.
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -o fakes/fake_github.go . Github
 type Github interface {
-	ListPullRequests([]githubv4.PullRequestState) ([]*PullRequest, error)
+	ListPullRequests([]githubv4.PullRequestState, time.Time) ([]*PullRequest, error)
 	ListModifiedFiles(int) ([]string, error)
 	PostComment(string, string) error
 	GetPullRequest(string, string) (*PullRequest, error)
@@ -98,16 +99,18 @@ func NewGithubClient(s *Source) (*GithubClient, error) {
 }
 
 // ListPullRequests gets the last commit on all pull requests with the matching state.
-func (m *GithubClient) ListPullRequests(prStates []githubv4.PullRequestState) ([]*PullRequest, error) {
-	var query struct {
-		Repository struct {
-			PullRequests struct {
-				Edges []struct {
-					Node struct {
+func (m *GithubClient) ListPullRequests(prStates []githubv4.PullRequestState, since time.Time) ([]*PullRequest, error) {
+	var prSearch struct {
+		Search struct {
+			Edges []struct {
+				Node struct {
+					PullRequest struct {
 						PullRequestObject
+
 						Reviews struct {
 							TotalCount int
 						} `graphql:"reviews(states: $prReviewStates)"`
+
 						Commits struct {
 							Edges []struct {
 								Node struct {
@@ -115,6 +118,7 @@ func (m *GithubClient) ListPullRequests(prStates []githubv4.PullRequestState) ([
 								}
 							}
 						} `graphql:"commits(last:$commitsLast)"`
+
 						Labels struct {
 							Edges []struct {
 								Node struct {
@@ -122,51 +126,59 @@ func (m *GithubClient) ListPullRequests(prStates []githubv4.PullRequestState) ([
 								}
 							}
 						} `graphql:"labels(first:$labelsFirst)"`
-					}
+					} `graphql:"... on PullRequest"`
 				}
-				PageInfo struct {
-					EndCursor   githubv4.String
-					HasNextPage bool
-				}
-			} `graphql:"pullRequests(first:$prFirst,states:$prStates,after:$prCursor)"`
-		} `graphql:"repository(owner:$repositoryOwner,name:$repositoryName)"`
+			}
+			PageInfo struct {
+				EndCursor   githubv4.String
+				HasNextPage bool
+			}
+		} `graphql:"search(query:$query,type:ISSUE,last:$prFirst,after:$prCursor)"`
+	}
+
+	query := fmt.Sprintf("is:pr repo:%s/%s", m.Owner, m.Repository)
+
+	for _, state := range prStates {
+		query += strings.ToLower(fmt.Sprintf(" state:%s", state))
+	}
+
+	if !since.IsZero() {
+		query += fmt.Sprintf(" updated:>=%s", since.Format(time.RFC3339))
 	}
 
 	vars := map[string]interface{}{
-		"repositoryOwner": githubv4.String(m.Owner),
-		"repositoryName":  githubv4.String(m.Repository),
-		"prFirst":         githubv4.Int(100),
-		"prStates":        prStates,
-		"prCursor":        (*githubv4.String)(nil),
-		"commitsLast":     githubv4.Int(1),
-		"prReviewStates":  []githubv4.PullRequestReviewState{githubv4.PullRequestReviewStateApproved},
-		"labelsFirst":     githubv4.Int(100),
+		"prFirst":        githubv4.Int(100),
+		"prCursor":       (*githubv4.String)(nil),
+		"prReviewStates": []githubv4.PullRequestReviewState{githubv4.PullRequestReviewStateApproved},
+		"commitsLast":    githubv4.Int(1),
+		"labelsFirst":    githubv4.Int(100),
+		"query":          githubv4.String(query),
 	}
 
 	var response []*PullRequest
 	for {
-		if err := m.V4.Query(context.TODO(), &query, vars); err != nil {
+		if err := m.V4.Query(context.TODO(), &prSearch, vars); err != nil {
 			return nil, err
 		}
-		for _, p := range query.Repository.PullRequests.Edges {
-			labels := make([]LabelObject, len(p.Node.Labels.Edges))
-			for _, l := range p.Node.Labels.Edges {
+		for _, p := range prSearch.Search.Edges {
+			labels := make([]LabelObject, len(p.Node.PullRequest.Labels.Edges))
+			for _, l := range p.Node.PullRequest.Labels.Edges {
 				labels = append(labels, l.Node.LabelObject)
 			}
 
-			for _, c := range p.Node.Commits.Edges {
+			for _, c := range p.Node.PullRequest.Commits.Edges {
 				response = append(response, &PullRequest{
-					PullRequestObject:   p.Node.PullRequestObject,
+					PullRequestObject:   p.Node.PullRequest.PullRequestObject,
 					Tip:                 c.Node.Commit,
-					ApprovedReviewCount: p.Node.Reviews.TotalCount,
+					ApprovedReviewCount: p.Node.PullRequest.Reviews.TotalCount,
 					Labels:              labels,
 				})
 			}
 		}
-		if !query.Repository.PullRequests.PageInfo.HasNextPage {
+		if !prSearch.Search.PageInfo.HasNextPage {
 			break
 		}
-		vars["prCursor"] = query.Repository.PullRequests.PageInfo.EndCursor
+		vars["prCursor"] = prSearch.Search.PageInfo.EndCursor
 	}
 	return response, nil
 }

@@ -3,6 +3,7 @@ package fakes
 
 import (
 	"sync"
+	"time"
 
 	"github.com/shurcooL/githubv4"
 	resource "github.com/telia-oss/github-pr-resource"
@@ -61,10 +62,11 @@ type FakeGithub struct {
 		result1 []string
 		result2 error
 	}
-	ListPullRequestsStub        func([]githubv4.PullRequestState) ([]*resource.PullRequest, error)
+	ListPullRequestsStub        func([]githubv4.PullRequestState, time.Time) ([]*resource.PullRequest, error)
 	listPullRequestsMutex       sync.RWMutex
 	listPullRequestsArgsForCall []struct {
 		arg1 []githubv4.PullRequestState
+		arg2 time.Time
 	}
 	listPullRequestsReturns struct {
 		result1 []*resource.PullRequest
@@ -357,7 +359,7 @@ func (fake *FakeGithub) ListModifiedFilesReturnsOnCall(i int, result1 []string, 
 	}{result1, result2}
 }
 
-func (fake *FakeGithub) ListPullRequests(arg1 []githubv4.PullRequestState) ([]*resource.PullRequest, error) {
+func (fake *FakeGithub) ListPullRequests(arg1 []githubv4.PullRequestState, arg2 time.Time) ([]*resource.PullRequest, error) {
 	var arg1Copy []githubv4.PullRequestState
 	if arg1 != nil {
 		arg1Copy = make([]githubv4.PullRequestState, len(arg1))
@@ -367,11 +369,12 @@ func (fake *FakeGithub) ListPullRequests(arg1 []githubv4.PullRequestState) ([]*r
 	ret, specificReturn := fake.listPullRequestsReturnsOnCall[len(fake.listPullRequestsArgsForCall)]
 	fake.listPullRequestsArgsForCall = append(fake.listPullRequestsArgsForCall, struct {
 		arg1 []githubv4.PullRequestState
-	}{arg1Copy})
-	fake.recordInvocation("ListPullRequests", []interface{}{arg1Copy})
+		arg2 time.Time
+	}{arg1Copy, arg2})
+	fake.recordInvocation("ListPullRequests", []interface{}{arg1Copy, arg2})
 	fake.listPullRequestsMutex.Unlock()
 	if fake.ListPullRequestsStub != nil {
-		return fake.ListPullRequestsStub(arg1)
+		return fake.ListPullRequestsStub(arg1, arg2)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
@@ -386,17 +389,17 @@ func (fake *FakeGithub) ListPullRequestsCallCount() int {
 	return len(fake.listPullRequestsArgsForCall)
 }
 
-func (fake *FakeGithub) ListPullRequestsCalls(stub func([]githubv4.PullRequestState) ([]*resource.PullRequest, error)) {
+func (fake *FakeGithub) ListPullRequestsCalls(stub func([]githubv4.PullRequestState, time.Time) ([]*resource.PullRequest, error)) {
 	fake.listPullRequestsMutex.Lock()
 	defer fake.listPullRequestsMutex.Unlock()
 	fake.ListPullRequestsStub = stub
 }
 
-func (fake *FakeGithub) ListPullRequestsArgsForCall(i int) []githubv4.PullRequestState {
+func (fake *FakeGithub) ListPullRequestsArgsForCall(i int) ([]githubv4.PullRequestState, time.Time) {
 	fake.listPullRequestsMutex.RLock()
 	defer fake.listPullRequestsMutex.RUnlock()
 	argsForCall := fake.listPullRequestsArgsForCall[i]
-	return argsForCall.arg1
+	return argsForCall.arg1, argsForCall.arg2
 }
 
 func (fake *FakeGithub) ListPullRequestsReturns(result1 []*resource.PullRequest, result2 error) {
